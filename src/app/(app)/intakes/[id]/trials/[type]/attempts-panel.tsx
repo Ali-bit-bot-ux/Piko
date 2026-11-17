@@ -3,9 +3,11 @@
 import { useRef, useState, useTransition } from "react";
 import { Button, Input } from "@/components/ui";
 import { interpolate } from "@/lib/i18n";
+import type { Attempt } from "@/lib/trial-attempts";
 import { correctMeasurementAction } from "./actions";
 
-export type SavedAttempt = { id: string; attempt: number; value: number };
+/** A saved result; `pending` ones are still only on the phone (no connection). */
+export type SavedAttempt = Attempt;
 
 export type CorrectionTexts = {
   fix: string;
@@ -38,6 +40,8 @@ type Props = {
   lineTemplate: string;
   texts: CorrectionTexts;
   onCorrected: (id: string, value: number) => void;
+  /** Shown next to a result that is waiting for a connection. */
+  pendingLabel?: string;
 };
 
 const format = (kind: Props["kind"], value: number) =>
@@ -51,6 +55,7 @@ export function AttemptsPanel({
   lineTemplate,
   texts,
   onCorrected,
+  pendingLabel,
 }: Props) {
   const [editing, setEditing] = useState<string | null>(null);
   const [value, setValue] = useState("");
@@ -110,8 +115,10 @@ export function AttemptsPanel({
                   attempt: a.attempt,
                   value: format(kind, a.value),
                 })}
+                {a.pending && pendingLabel ? ` · ${pendingLabel}` : ""}
               </span>
-              {editing !== a.id ? (
+              {/* A result that is not on the server yet cannot be corrected. */}
+              {editing !== a.id && !a.pending ? (
                 <Button
                   variant="ghost"
                   className="min-h-11 px-4 text-sm text-primary"

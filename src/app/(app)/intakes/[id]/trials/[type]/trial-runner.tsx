@@ -4,12 +4,14 @@ import { useEffect, useRef, useState, useTransition } from "react";
 import { Button, Card, Select } from "@/components/ui";
 import { interpolate } from "@/lib/i18n";
 import { formatStopwatch, toSeconds } from "@/lib/stopwatch";
-import { recordMeasurementAction } from "./actions";
+import { addAttempt, dropPending, markSent } from "@/lib/trial-attempts";
 import {
   AttemptsPanel,
   type CorrectionTexts,
   type SavedAttempt,
 } from "./attempts-panel";
+import { OfflineBanner, type OfflineTexts } from "./offline-banner";
+import { useOfflineSave } from "./use-offline-save";
 
 export type RunnerCandidate = {
   candidateId: string;
@@ -33,6 +35,7 @@ export type TrialRunnerTexts = {
   best: string;
   allDone: string;
   timerLabel: string;
+  offline: OfflineTexts;
   errors: Record<
     | "invalid"
     | "forbidden"
@@ -54,14 +57,32 @@ export function TrialRunner({
   candidates: initial,
   texts,
   correction,
+  queueKey,
 }: {
   intakeId: string;
   trialType: "sprint_20m" | "shuttle_5_10_5" | "dribbling";
   candidates: RunnerCandidate[];
   texts: TrialRunnerTexts;
   correction: CorrectionTexts;
+  /** Where unsent results wait: one queue per signed-in user and intake. */
+  queueKey: string;
 }) {
   const [candidates, setCandidates] = useState(initial);
+  const [sentLater, setSentLater] = useState(0);
+  const [droppedCount, setDroppedCount] = useState(0);
+  const offline = useOfflineSave({
+    queueKey,
+    onFlushed: (report) => {
+      setCandidates((current) =>
+        dropPending(
+          markSent(current, report.sent),
+          report.dropped.map((d) => d.eventId),
+        ),
+      );
+      setSentLater((count) => count + report.sent.length);
+      setDroppedCount((count) => count + report.dropped.length);
+    },
+  });
   const [candidateId, setCandidateId] = useState("");
   const [phase, setPhase] = useState<Phase>("idle");
   const [elapsed, setElapsed] = useState(0);
@@ -115,40 +136,39 @@ export function TrialRunner({
     if (!selected) return;
     const value = toSeconds(elapsed);
     const attempt = nextAttempt;
+    const clientEventId = eventId.current;
     startSaving(async () => {
-      const result = await recordMeasurementAction({
+      const result = await offline.submit({
         intakeId,
         trialType,
         candidateId: selected.candidateId,
         attempt,
         value,
-        clientEventId: eventId.current,
+        clientEventId,
         occurredAtDevice: new Date().toISOString(),
       });
-      if (result.ok) {
-        setCandidates((current) =>
-          current.map((c) =>
-            c.candidateId === selected.candidateId &&
-            !c.attempts.some((a) => a.attempt === attempt)
-              ? {
-                  ...c,
-                  attempts: [
-                    ...c.attempts,
-                    { id: result.measurementId, attempt, value },
-                  ],
-                }
-              : c,
-          ),
-        );
-        setMessage({
-          kind: "ok",
-          text: interpolate(texts.saved, { value: value.toFixed(2) }),
-        });
-        setPhase("idle");
-        setElapsed(0);
-      } else {
+      if (result.status === "failed") {
         setMessage({ kind: "error", text: texts.errors[result.code] });
+        return;
       }
+      // Sent now, or kept on the phone: either way the coach can go on.
+      const queued = result.status === "queued";
+      setCandidates((current) =>
+        addAttempt(current, selected.candidateId, {
+          id: queued ? `pending-${clientEventId}` : result.measurementId,
+          attempt,
+          value,
+          ...(queued ? { pending: true, eventId: clientEventId } : {}),
+        }),
+      );
+      setMessage({
+        kind: "ok",
+        text: queued
+          ? texts.offline.queued
+          : interpolate(texts.saved, { value: value.toFixed(2) }),
+      });
+      setPhase("idle");
+      setElapsed(0);
     });
   }
 
@@ -162,6 +182,15 @@ export function TrialRunner({
 
   return (
     <div className="flex flex-col gap-5">
+      <OfflineBanner
+        texts={texts.offline}
+        online={offline.online}
+        pending={offline.pending}
+        sending={offline.sending}
+        onFlush={() => void offline.flush()}
+        sentLater={sentLater}
+        dropped={droppedCount}
+      />
       <Select
         label={texts.candidate}
         value={candidateId}
@@ -268,6 +297,7 @@ export function TrialRunner({
               attempts={selected.attempts}
               lineTemplate={texts.attemptLine}
               texts={correction}
+              pendingLabel={texts.offline.pendingLabel}
               onCorrected={(id, value) => {
                 setMessage(null);
                 setCandidates((current) =>

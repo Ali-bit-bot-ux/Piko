@@ -35,6 +35,8 @@ export default async function TrialPage(
   if (!progress) notFound();
 
   const open = intake.status === "open" || intake.status === "testing";
+  // Unsent results wait in the browser under this key: per user and intake.
+  const queueKey = `piko.queue.v1:${user.id}:${intake.id}`;
 
   return (
     <div className="mx-auto flex w-full max-w-xl flex-col gap-5">
@@ -54,6 +56,7 @@ export default async function TrialPage(
       {open ? (
         isTimedTrial(trialType.data) ? (
           <TrialRunner
+            queueKey={queueKey}
             intakeId={intake.id}
             trialType={trialType.data}
             candidates={progress}
@@ -62,6 +65,7 @@ export default async function TrialPage(
           />
         ) : (
           <CountRunner
+            queueKey={queueKey}
             intakeId={intake.id}
             trialType={trialType.data}
             candidates={progress}

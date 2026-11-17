@@ -4,9 +4,11 @@ import { useRef, useState, useTransition } from "react";
 import { Button, Card, Select } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { interpolate } from "@/lib/i18n";
-import { recordMeasurementAction } from "./actions";
+import { addAttempt, dropPending, markSent } from "@/lib/trial-attempts";
 import { AttemptsPanel, type CorrectionTexts } from "./attempts-panel";
+import { OfflineBanner } from "./offline-banner";
 import type { RunnerCandidate, TrialRunnerTexts } from "./trial-runner";
+import { useOfflineSave } from "./use-offline-save";
 
 export type CountRunnerTexts = {
   hint: string;
@@ -32,6 +34,7 @@ export function CountRunner({
   texts,
   runnerTexts,
   correction,
+  queueKey,
 }: {
   intakeId: string;
   trialType: "passing" | "shooting";
@@ -40,8 +43,25 @@ export function CountRunner({
   /** Shared labels of the stopwatch screen (candidate select, errors...). */
   runnerTexts: TrialRunnerTexts;
   correction: CorrectionTexts;
+  /** Where unsent results wait: one queue per signed-in user and intake. */
+  queueKey: string;
 }) {
   const [candidates, setCandidates] = useState(initial);
+  const [sentLater, setSentLater] = useState(0);
+  const [droppedCount, setDroppedCount] = useState(0);
+  const offline = useOfflineSave({
+    queueKey,
+    onFlushed: (report) => {
+      setCandidates((current) =>
+        dropPending(
+          markSent(current, report.sent),
+          report.dropped.map((d) => d.eventId),
+        ),
+      );
+      setSentLater((count) => count + report.sent.length);
+      setDroppedCount((count) => count + report.dropped.length);
+    },
+  });
   const [candidateId, setCandidateId] = useState("");
   const [count, setCount] = useState<number | null>(null);
   const [message, setMessage] = useState<{
@@ -75,40 +95,39 @@ export function CountRunner({
     }
     const value = count;
     const attempt = nextAttempt;
+    const clientEventId = eventId.current;
     startSaving(async () => {
-      const result = await recordMeasurementAction({
+      const result = await offline.submit({
         intakeId,
         trialType,
         candidateId: selected.candidateId,
         attempt,
         value,
-        clientEventId: eventId.current,
+        clientEventId,
         occurredAtDevice: new Date().toISOString(),
       });
-      if (result.ok) {
-        setCandidates((current) =>
-          current.map((c) =>
-            c.candidateId === selected.candidateId &&
-            !c.attempts.some((a) => a.attempt === attempt)
-              ? {
-                  ...c,
-                  attempts: [
-                    ...c.attempts,
-                    { id: result.measurementId, attempt, value },
-                  ],
-                }
-              : c,
-          ),
-        );
-        setMessage({
-          kind: "ok",
-          text: interpolate(texts.saved, { value }),
-        });
-        setCount(null);
-        eventId.current = "";
-      } else {
+      if (result.status === "failed") {
         setMessage({ kind: "error", text: runnerTexts.errors[result.code] });
+        return;
       }
+      // Sent now, or kept on the phone: either way the coach can go on.
+      const queued = result.status === "queued";
+      setCandidates((current) =>
+        addAttempt(current, selected.candidateId, {
+          id: queued ? `pending-${clientEventId}` : result.measurementId,
+          attempt,
+          value,
+          ...(queued ? { pending: true, eventId: clientEventId } : {}),
+        }),
+      );
+      setMessage({
+        kind: "ok",
+        text: queued
+          ? runnerTexts.offline.queued
+          : interpolate(texts.saved, { value }),
+      });
+      setCount(null);
+      eventId.current = "";
     });
   }
 
@@ -122,6 +141,15 @@ export function CountRunner({
 
   return (
     <div className="flex flex-col gap-5">
+      <OfflineBanner
+        texts={runnerTexts.offline}
+        online={offline.online}
+        pending={offline.pending}
+        sending={offline.sending}
+        onFlush={() => void offline.flush()}
+        sentLater={sentLater}
+        dropped={droppedCount}
+      />
       <p className="text-ink-muted">{texts.hint}</p>
       <Select
         label={runnerTexts.candidate}
@@ -213,6 +241,7 @@ export function CountRunner({
               attempts={selected.attempts}
               lineTemplate={texts.attemptLine}
               texts={correction}
+              pendingLabel={runnerTexts.offline.pendingLabel}
               onCorrected={(id, value) => {
                 setMessage(null);
                 setCandidates((current) =>

@@ -9,7 +9,7 @@ export function Logo() {
     <Link
       href={routes.home}
       aria-label={t.homeAria}
-      className="inline-flex items-center gap-2 rounded-lg text-2xl font-extrabold tracking-tight text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+      className="inline-flex min-h-11 items-center gap-2 rounded-lg text-2xl font-extrabold tracking-tight text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
     >
       <span
         aria-hidden
