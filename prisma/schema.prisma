@@ -1,0 +1,300 @@
+// Piko data model (docs/architecture.md, docs/scoring.md, docs/event-log.md).
+// The connection URL lives in prisma.config.ts, not here (Prisma 7).
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  admin
+  director
+  coach
+  parent
+}
+
+enum Plan {
+  pilot
+  section
+  academy
+  network
+  federation
+}
+
+enum IntakeStatus {
+  draft
+  open
+  testing
+  finished
+}
+
+/// Age profiles with their own criteria and weights (docs/scoring.md).
+enum AgeProfile {
+  U7_U9
+  U10_U11
+  U12_U14
+}
+
+enum CandidateStatus {
+  registered
+  checked_in
+  evaluated
+  decided
+}
+
+/// Objective tests (docs/scoring.md).
+enum TrialType {
+  sprint_20m
+  shuttle_5_10_5
+  dribbling
+  passing
+  shooting
+}
+
+enum MeasurementSource {
+  manual
+  timer
+}
+
+enum AnalysisSource {
+  log
+  video
+  both
+}
+
+/// Decision statuses (docs/scoring.md).
+enum Decision {
+  enrolled
+  reserve
+  review
+  rejected
+}
+
+enum EventSource {
+  mobile_offline
+  mobile_online
+  web
+  system
+}
+
+enum EventType {
+  registration_created
+  consent_granted
+  tryout_published
+  participant_checked_in
+  measurement_recorded
+  evaluation_scored
+  measurement_corrected
+  evaluation_reopened
+  decision_changed
+  report_sent
+  report_opened
+  login_attempt
+}
+
+model Organization {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String
+  city      String?
+  plan      Plan     @default(pilot)
+  createdAt DateTime @default(now())
+
+  users   User[]
+  intakes Intake[]
+
+  @@map("organizations")
+}
+
+model User {
+  id             String   @id @default(uuid()) @db.Uuid
+  email          String   @unique
+  name           String
+  role           Role
+  /// Null for parents, who are not tied to an academy.
+  organizationId String?  @db.Uuid
+  createdAt      DateTime @default(now())
+
+  organization Organization? @relation(fields: [organizationId], references: [id])
+  measurements Measurement[]
+  evaluations  Evaluation[]
+
+  @@index([organizationId])
+  @@map("users")
+}
+
+model Intake {
+  id             String       @id @default(uuid()) @db.Uuid
+  organizationId String       @db.Uuid
+  name           String
+  /// Birth year of the group, e.g. 2015.
+  birthYear      Int
+  ageProfile     AgeProfile
+  tryoutDate     DateTime     @db.Date
+  status         IntakeStatus @default(draft)
+  createdAt      DateTime     @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  candidates   Candidate[]
+  trials       Trial[]
+
+  @@index([organizationId])
+  @@map("intakes")
+}
+
+/// Personal data of a minor (AGENTS.md rule 4). The id doubles as the
+/// pseudonymous participant id used in the event log.
+model Candidate {
+  id               String          @id @default(uuid()) @db.Uuid
+  intakeId         String          @db.Uuid
+  fullName         String
+  birthDate        DateTime        @db.Date
+  parentName       String
+  parentContact    String
+  consentGrantedAt DateTime
+  /// Version of the consent text the parent agreed to.
+  consentVersion   String
+  status           CandidateStatus @default(registered)
+  createdAt        DateTime        @default(now())
+
+  intake       Intake        @relation(fields: [intakeId], references: [id], onDelete: Cascade)
+  measurements Measurement[]
+  evaluations  Evaluation[]
+  analyses     Analysis[]
+  score        Score?
+  report       Report?
+
+  @@index([intakeId])
+  @@map("candidates")
+}
+
+model Trial {
+  id       String    @id @default(uuid()) @db.Uuid
+  intakeId String    @db.Uuid
+  type     TrialType
+
+  intake       Intake        @relation(fields: [intakeId], references: [id], onDelete: Cascade)
+  measurements Measurement[]
+
+  @@unique([intakeId, type])
+  @@map("trials")
+}
+
+model Measurement {
+  id           String            @id @default(uuid()) @db.Uuid
+  candidateId  String            @db.Uuid
+  trialId      String            @db.Uuid
+  /// 1-based attempt number ("best of two", docs/scoring.md).
+  attempt      Int
+  /// Seconds for timed tests, a count for passing and shooting.
+  value        Float
+  source       MeasurementSource @default(manual)
+  recordedById String?           @db.Uuid
+  createdAt    DateTime          @default(now())
+
+  candidate  Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  trial      Trial     @relation(fields: [trialId], references: [id], onDelete: Cascade)
+  recordedBy User?     @relation(fields: [recordedById], references: [id], onDelete: SetNull)
+
+  @@unique([candidateId, trialId, attempt])
+  @@index([candidateId])
+  @@map("measurements")
+}
+
+/// A coach's expert score for one criterion (1..5). The final score uses the
+/// median across coaches (docs/scoring.md).
+model Evaluation {
+  id           String   @id @default(uuid()) @db.Uuid
+  candidateId  String   @db.Uuid
+  coachId      String?  @db.Uuid
+  criterionKey String
+  score        Int
+  comment      String?
+  createdAt    DateTime @default(now())
+
+  candidate Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  coach     User?     @relation(fields: [coachId], references: [id], onDelete: SetNull)
+
+  @@unique([candidateId, criterionKey, coachId])
+  @@index([candidateId])
+  @@map("evaluations")
+}
+
+/// AI suggestions for a coach (D-019). Never the final score by itself.
+model Analysis {
+  id           String         @id @default(uuid()) @db.Uuid
+  candidateId  String         @db.Uuid
+  source       AnalysisSource
+  provider     String
+  /// Validated AnalysisResult (src/server/analysis/types.ts).
+  result       Json
+  inputTokens  Int
+  outputTokens Int
+  createdAt    DateTime       @default(now())
+
+  candidate Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+
+  @@index([candidateId])
+  @@map("analyses")
+}
+
+model Score {
+  id          String   @id @default(uuid()) @db.Uuid
+  candidateId String   @unique @db.Uuid
+  /// Weighted total, 1.00..5.00.
+  total       Decimal  @db.Decimal(3, 2)
+  /// Per-criterion scores used for the total.
+  breakdown   Json
+  decision    Decision
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  candidate Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+
+  @@map("scores")
+}
+
+model Report {
+  id          String    @id @default(uuid()) @db.Uuid
+  candidateId String    @unique @db.Uuid
+  /// SHA-256 of the public link token. The token itself is never stored.
+  tokenHash   String    @unique
+  expiresAt   DateTime
+  summary     String
+  sentAt      DateTime?
+  openedAt    DateTime?
+  createdAt   DateTime  @default(now())
+
+  candidate Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+
+  @@map("reports")
+}
+
+/// Append-only audit journal (docs/event-log.md, D-015).
+/// No foreign keys on purpose: the journal must survive deletion of personal
+/// data (D-020), so it holds only pseudonymous ids and never names, contacts
+/// or other personal data in `payload`. UPDATE/DELETE are blocked in T-008.
+model Event {
+  id               String      @id @db.Uuid
+  type             EventType
+  actorId          String?     @db.Uuid
+  actorRole        Role?
+  organizationId   String      @db.Uuid
+  intakeId         String?     @db.Uuid
+  participantId    String?     @db.Uuid
+  occurredAtDevice DateTime
+  occurredAtServer DateTime    @default(now())
+  payload          Json
+  payloadHash      String
+  previousEventId  String?     @db.Uuid
+  source           EventSource
+  ipHash           String?
+  deviceIdHash     String?
+
+  @@index([organizationId, occurredAtServer])
+  @@index([participantId])
+  @@map("events")
+}

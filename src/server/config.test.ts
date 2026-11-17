@@ -21,6 +21,14 @@ describe("loadConfig", () => {
     expect(config.storageLocalDir).toBe("var/files");
   });
 
+  it("reads the database URL when present and leaves it unset otherwise", () => {
+    expect(loadConfig({}).databaseUrl).toBeUndefined();
+    expect(
+      loadConfig({ DATABASE_URL: "postgresql://u:p@localhost:5432/piko" })
+        .databaseUrl,
+    ).toBe("postgresql://u:p@localhost:5432/piko");
+  });
+
   it("treats empty values as unset", () => {
     expect(loadConfig({ ANALYSIS_PROVIDER: "", STORAGE: "" })).toEqual(
       loadConfig({}),

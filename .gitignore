@@ -43,3 +43,6 @@ next-env.d.ts
 
 # local development storage
 /.data/
+
+# generated Prisma client (npm run db:generate)
+/src/generated/

@@ -58,6 +58,7 @@ Next.js (App Router) + TypeScript, один репозиторий. Подтве
 - сборка: `npm run build`
 - тесты: `npm run test:watch`, `npm run test:coverage` (порог 80% для `src/server` и `src/lib`)
 - форматирование: `npm run format` (Prettier, только `src` и `tests`)
+- база данных (Postgres, `DATABASE_URL` в `.env.local`): `npm run db:migrate` (новая миграция после правки `prisma/schema.prisma`), `npm run db:deploy`, `npm run db:seed` (демо-данные, можно запускать повторно), `npm run db:generate`, `npm run db:validate`. Клиент: `getPrisma()` из `src/server/db/client.ts`. Интеграционные тесты БД пропускаются, если `DATABASE_URL` не задан.
 
 <!-- BEGIN:nextjs-agent-rules -->
 

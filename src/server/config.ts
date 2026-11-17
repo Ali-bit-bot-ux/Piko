@@ -4,12 +4,15 @@ const envSchema = z.object({
   ANALYSIS_PROVIDER: z.enum(["stub", "claude", "google"]).default("stub"),
   STORAGE: z.enum(["local", "cloud"]).default("local"),
   STORAGE_LOCAL_DIR: z.string().min(1).default(".data/storage"),
+  DATABASE_URL: z.string().min(1).optional(),
 });
 
 export type AppConfig = {
   analysisProvider: "stub" | "claude" | "google";
   storage: "local" | "cloud";
   storageLocalDir: string;
+  /** Postgres connection string. Optional so tools that do not need the database still start. */
+  databaseUrl?: string;
 };
 
 export class ConfigError extends Error {
@@ -39,5 +42,6 @@ export function loadConfig(env: Env = process.env): AppConfig {
     analysisProvider: parsed.data.ANALYSIS_PROVIDER,
     storage: parsed.data.STORAGE,
     storageLocalDir: parsed.data.STORAGE_LOCAL_DIR,
+    databaseUrl: parsed.data.DATABASE_URL,
   };
 }
