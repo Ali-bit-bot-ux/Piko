@@ -106,6 +106,7 @@ describe.skipIf(!hasDatabase)("recording stopwatch results (database)", () => {
     await prisma.intake.deleteMany({
       where: { id: { in: [openIntakeId, draftIntakeId, otherIntakeId] } },
     });
+    await prisma.user.deleteMany({ where: { id: coachId } });
     await prisma.organization.deleteMany({
       where: { id: { in: [orgId, otherOrgId] } },
     });
