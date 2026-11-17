@@ -68,13 +68,15 @@ interface AnalysisProvider {
   analyze(input: AnalysisInput): Promise<AnalysisResult>; // валидируется zod
 }
 interface Storage {
-  put(key: string, data: Buffer): Promise<void>;
-  get(key: string): Promise<Buffer>;
-  delete(key: string): Promise<void>;
+  put(key: string, data: Uint8Array): Promise<void>;
+  get(key: string): Promise<Uint8Array>;   // StorageError "not_found"
+  delete(key: string): Promise<void>;      // идемпотентно (D-020)
   signedUrl(key: string, ttlSec: number): Promise<string>;
 }
 ```
-Реализации выбираются через конфиг (`ANALYSIS_PROVIDER=claude|google`, `STORAGE=local|cloud`). Страницы и компоненты не импортируют SDK напрямую.
+Реализации выбираются через конфиг (`ANALYSIS_PROVIDER=stub|claude|google`, `STORAGE=local|cloud`, читает `src/server/config.ts`). Страницы и компоненты не импортируют SDK напрямую.
+
+Состояние (T-007): есть `StubAnalysisProvider` (заглушка для разработки и тестов) и `LocalStorage` (диск, каталог `.data/storage`, ключи проверяются от выхода за корень). Claude (T-042), Google и облачное хранилище (T-061) пока выдают понятную ошибку «not implemented». Локальное хранилище не умеет `signedUrl` (ошибка `unsupported`). Ответ провайдера всегда проходит `parseAnalysisResult` (zod). Лимит кадров на запрос: `MAX_FRAMES_PER_REQUEST = 40`.
 
 ## Рекомендуемые технологии (подтверждает команда, см. decisions.md)
 Tailwind CSS (токены из `tokens.css`), Postgres + Prisma, Auth.js, zod, Vitest, Playwright, Lucide.
