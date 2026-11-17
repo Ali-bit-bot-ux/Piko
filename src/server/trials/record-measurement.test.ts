@@ -41,9 +41,43 @@ describe("recordMeasurementSchema", () => {
     }
   });
 
-  it("rejects counted tests, which have their own form (T-031), and bad ids", () => {
+  it("accepts counted tests with a whole number 0..10", () => {
+    for (const trialType of ["passing", "shooting"]) {
+      for (const value of [0, 7, 10]) {
+        expect(
+          recordMeasurementSchema.safeParse({ ...valid, trialType, value })
+            .success,
+        ).toBe(true);
+      }
+      for (const value of [-1, 11, 4.5, Number.NaN]) {
+        expect(
+          recordMeasurementSchema.safeParse({ ...valid, trialType, value })
+            .success,
+        ).toBe(false);
+      }
+    }
+  });
+
+  it("does not take a count for a timed test or seconds for a count", () => {
     expect(
-      recordMeasurementSchema.safeParse({ ...valid, trialType: "passing" })
+      recordMeasurementSchema.safeParse({
+        ...valid,
+        trialType: "sprint_20m",
+        value: 0,
+      }).success,
+    ).toBe(false);
+    expect(
+      recordMeasurementSchema.safeParse({
+        ...valid,
+        trialType: "passing",
+        value: 4.5,
+      }).success,
+    ).toBe(false);
+  });
+
+  it("rejects unknown tests and bad ids", () => {
+    expect(
+      recordMeasurementSchema.safeParse({ ...valid, trialType: "jumping" })
         .success,
     ).toBe(false);
     expect(

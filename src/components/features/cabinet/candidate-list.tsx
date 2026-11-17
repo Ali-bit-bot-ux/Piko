@@ -10,6 +10,7 @@ import type { BadgeVariant } from "@/components/ui";
 import { contactHref } from "@/lib/contact";
 import { APP_TIME_ZONE, formatDate } from "@/lib/format";
 import { getDictionary, interpolate } from "@/lib/i18n";
+import { candidatePath } from "@/lib/routes";
 import type { CandidateStatus, IntakeStatus } from "@/generated/prisma/enums";
 import {
   candidateStatuses,
@@ -34,6 +35,7 @@ export type CandidateRow = {
 };
 
 type Props = {
+  intakeId: string;
   /** Path of the page the filter form sends to (a plain GET form, no scripts needed). */
   action: string;
   intakeStatus: IntakeStatus;
@@ -43,13 +45,14 @@ type Props = {
 };
 
 export function CandidateList({
+  intakeId,
   action,
   intakeStatus,
   filters,
   total,
   items,
 }: Props) {
-  const t = getDictionary().candidates;
+  const { candidates: t, results } = getDictionary();
   const filtered = Boolean(filters.q || filters.status);
 
   return (
@@ -156,6 +159,16 @@ export function CandidateList({
                         ),
                       })}
                     </p>
+                  </div>
+                  <div>
+                    <ButtonLink
+                      href={candidatePath(intakeId, candidate.id)}
+                      variant="secondary"
+                      className="w-full sm:w-auto"
+                    >
+                      {results.candidate.open}
+                      <span className="sr-only">: {candidate.fullName}</span>
+                    </ButtonLink>
                   </div>
                 </Card>
               </li>

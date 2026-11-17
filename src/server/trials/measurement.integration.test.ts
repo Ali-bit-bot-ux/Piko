@@ -48,7 +48,13 @@ describe.skipIf(!hasDatabase)("recording stopwatch results (database)", () => {
         tryoutDate: new Date("2026-12-01"),
         status,
         trials: {
-          create: ["sprint_20m", "shuttle_5_10_5", "dribbling"].map((type) => ({
+          create: [
+            "sprint_20m",
+            "shuttle_5_10_5",
+            "dribbling",
+            "passing",
+            "shooting",
+          ].map((type) => ({
             type: type as "sprint_20m",
           })),
         },
@@ -113,7 +119,7 @@ describe.skipIf(!hasDatabase)("recording stopwatch results (database)", () => {
       input({ value: 4.056, clientEventId: eventId }),
       prisma,
     );
-    expect(result).toEqual({ ok: true, duplicate: false });
+    expect(result).toMatchObject({ ok: true, duplicate: false });
 
     const saved = await prisma.measurement.findFirstOrThrow({
       where: { candidateId: anna },
@@ -151,13 +157,13 @@ describe.skipIf(!hasDatabase)("recording stopwatch results (database)", () => {
       candidateId: boris,
       clientEventId: crypto.randomUUID(),
     });
-    expect(await recordMeasurement(coach(), same, prisma)).toEqual({
-      ok: true,
-      duplicate: false,
-    });
+    const first = await recordMeasurement(coach(), same, prisma);
+    expect(first).toMatchObject({ ok: true, duplicate: false });
+    // The retry gets the same measurement id back.
     expect(await recordMeasurement(coach(), same, prisma)).toEqual({
       ok: true,
       duplicate: true,
+      measurementId: (first as { measurementId: string }).measurementId,
     });
     expect(
       await prisma.measurement.count({ where: { candidateId: boris } }),
@@ -181,7 +187,7 @@ describe.skipIf(!hasDatabase)("recording stopwatch results (database)", () => {
         input({ attempt: 2, value: 4.01 }),
         prisma,
       ),
-    ).toEqual({ ok: true, duplicate: false });
+    ).toMatchObject({ ok: true, duplicate: false });
     const events = await listEvents(
       { organizationId: orgId, intakeId: openIntakeId, participantId: anna },
       prisma,
@@ -192,6 +198,47 @@ describe.skipIf(!hasDatabase)("recording stopwatch results (database)", () => {
     expect(
       events.filter((e) => e.type === "measurement_recorded"),
     ).toHaveLength(2);
+  });
+
+  it("saves a count of successes for passing and shooting as a manual result", async () => {
+    const eventId = crypto.randomUUID();
+    expect(
+      await recordMeasurement(
+        coach(),
+        input({
+          candidateId: boris,
+          trialType: "passing",
+          value: 7,
+          clientEventId: eventId,
+        }),
+        prisma,
+      ),
+    ).toMatchObject({ ok: true, duplicate: false });
+    const saved = await prisma.measurement.findFirstOrThrow({
+      where: { candidateId: boris, trial: { type: "passing" } },
+    });
+    expect(saved.value).toBe(7);
+    expect(saved.source).toBe("manual");
+
+    const event = await prisma.event.findUniqueOrThrow({
+      where: { id: eventId },
+    });
+    expect(event.payload).toEqual({
+      trialType: "passing",
+      attempt: 1,
+      value: 7,
+    });
+
+    // A count above 10 and a time for a counted test are refused.
+    for (const value of [11, 4.5]) {
+      expect(
+        await recordMeasurement(
+          coach(),
+          input({ candidateId: boris, trialType: "shooting", value }),
+          prisma,
+        ),
+      ).toEqual({ ok: false, code: "invalid" });
+    }
   });
 
   it("rejects a third attempt", async () => {
@@ -238,8 +285,8 @@ describe.skipIf(!hasDatabase)("recording stopwatch results (database)", () => {
       progress!.map((p) => [p.fullName, p.attempts]),
     );
     expect(byName["Анна Тестова"]).toEqual([
-      { attempt: 1, value: 4.06 },
-      { attempt: 2, value: 4.01 },
+      { id: expect.any(String), attempt: 1, value: 4.06 },
+      { id: expect.any(String), attempt: 2, value: 4.01 },
     ]);
     expect(byName["Борис Тестов"]).toHaveLength(1);
 

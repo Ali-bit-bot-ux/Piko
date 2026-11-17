@@ -16,10 +16,10 @@ import {
 } from "@/server/db/candidates";
 import { findIntakeForUser } from "@/server/db/intakes";
 import { qrSvg, registrationUrl } from "@/server/intakes/qr";
-import { timedTrialTypes } from "@/server/trials/record-measurement";
+import { trialTypes } from "@/server/trials/record-measurement";
 import { publishIntakeAction } from "./actions";
 
-const { intakeDetail: t, trials } = getDictionary();
+const { intakeDetail: t, trials, results } = getDictionary();
 
 export const metadata: Metadata = {
   robots: { index: false, follow: false },
@@ -104,9 +104,9 @@ export default async function IntakePage(props: PageProps<"/intakes/[id]">) {
       {intake.status === "open" || intake.status === "testing" ? (
         <Card className="flex flex-col gap-3">
           <h2 className="text-lg font-bold tracking-tight">{trials.title}</h2>
-          <p className="text-ink-muted">{trials.hint}</p>
+          <p className="text-ink-muted">{results.counts.trialsHint}</p>
           <ul className="flex flex-col gap-2">
-            {timedTrialTypes.map((type) => (
+            {trialTypes.map((type) => (
               <li key={type}>
                 <ButtonLink
                   href={trialPath(intake.id, type)}
@@ -122,6 +122,7 @@ export default async function IntakePage(props: PageProps<"/intakes/[id]">) {
       ) : null}
 
       <CandidateList
+        intakeId={intake.id}
         action={intakePath(intake.id)}
         intakeStatus={intake.status}
         filters={filters}

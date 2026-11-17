@@ -8,10 +8,11 @@ import { intakePath } from "@/lib/routes";
 import { requireStaff } from "@/server/auth/session";
 import { findIntakeForUser } from "@/server/db/intakes";
 import { listTrialProgress } from "@/server/db/measurements";
-import { timedTrialTypes } from "@/server/trials/record-measurement";
+import { isTimedTrial, trialTypes } from "@/server/trials/record-measurement";
+import { CountRunner } from "./count-runner";
 import { TrialRunner } from "./trial-runner";
 
-const { trials: t } = getDictionary();
+const { trials: t, results } = getDictionary();
 
 export const metadata: Metadata = {
   title: t.title,
@@ -24,7 +25,7 @@ export default async function TrialPage(
   const user = await requireStaff();
   const { id, type } = await props.params;
 
-  const trialType = z.enum(timedTrialTypes).safeParse(type);
+  const trialType = z.enum(trialTypes).safeParse(type);
   if (!z.uuid().safeParse(id).success || !trialType.success) notFound();
 
   // Another academy's intake looks exactly like a missing one.
@@ -51,12 +52,24 @@ export default async function TrialPage(
       </div>
 
       {open ? (
-        <TrialRunner
-          intakeId={intake.id}
-          trialType={trialType.data}
-          candidates={progress}
-          texts={t.runner}
-        />
+        isTimedTrial(trialType.data) ? (
+          <TrialRunner
+            intakeId={intake.id}
+            trialType={trialType.data}
+            candidates={progress}
+            texts={t.runner}
+            correction={results.correction}
+          />
+        ) : (
+          <CountRunner
+            intakeId={intake.id}
+            trialType={trialType.data}
+            candidates={progress}
+            texts={results.counts}
+            runnerTexts={t.runner}
+            correction={results.correction}
+          />
+        )
       ) : (
         <Card variant="muted">
           <p className="text-ink-muted">{t.notOpen}</p>

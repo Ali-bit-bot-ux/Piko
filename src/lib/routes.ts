@@ -18,6 +18,10 @@ export const routes = {
 /** Cabinet page of one intake. */
 export const intakePath = (id: string) => `/intakes/${id}`;
 
+/** Result page of one child: trial results, coach ratings, total. */
+export const candidatePath = (intakeId: string, candidateId: string) =>
+  `/intakes/${intakeId}/candidates/${candidateId}`;
+
 /** Stopwatch screen of one test of an intake. */
 export const trialPath = (intakeId: string, type: string) =>
   `/intakes/${intakeId}/trials/${type}`;
