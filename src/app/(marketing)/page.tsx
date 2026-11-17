@@ -1,8 +1,26 @@
-// Placeholder: the landing hero and sections arrive in T-011..T-013.
+import type { Metadata } from "next";
+import { AudienceStrip } from "@/components/features/landing/audience-strip";
+import { Benefits } from "@/components/features/landing/benefits";
+import { CtaBanner } from "@/components/features/landing/cta-banner";
+import { Hero } from "@/components/features/landing/hero";
+import { ProcessSteps } from "@/components/features/landing/process-steps";
+import { getDictionary } from "@/lib/i18n";
+
+const { home } = getDictionary().landing;
+
+export const metadata: Metadata = {
+  title: home.title,
+  description: home.description,
+};
+
 export default function Home() {
   return (
-    <section className="flex flex-1 items-center justify-center p-6">
-      <h1 className="text-3xl font-bold tracking-tight">Piko</h1>
-    </section>
+    <>
+      <Hero />
+      <AudienceStrip />
+      <Benefits />
+      <ProcessSteps />
+      <CtaBanner />
+    </>
   );
 }

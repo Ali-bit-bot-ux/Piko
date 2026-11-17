@@ -1,3 +1,5 @@
+import { landingRu } from "./landing.ru";
+
 /**
  * Russian UI texts. This object defines the shape of every dictionary:
  * other locales must provide the same keys (see ./index.ts).
@@ -8,6 +10,7 @@ export const ru = {
     title: "Piko",
     description: "Честный и понятный отбор в футбольные академии",
   },
+  landing: landingRu,
   common: {
     scoreAria: "{label}: {value} из {max}",
     scoreOutOf: "из {max}",
