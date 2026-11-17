@@ -2,6 +2,7 @@
 // DATABASE_URL is not set (for example on a machine without a database).
 import { config } from "dotenv";
 import { afterAll, describe, expect, it } from "vitest";
+import { purgeEventIdsForTests } from "../../../tests/helpers/events";
 
 config({ path: [".env.local", ".env"], quiet: true });
 
@@ -100,6 +101,7 @@ describe.skipIf(!hasDatabase)("database (needs seed: npm run db:seed)", () => {
       await prisma.event.findUnique({ where: { id: eventId } }),
     ).not.toBeNull();
 
-    await prisma.event.delete({ where: { id: eventId } });
+    // The journal is append-only; test cleanup uses a test-only helper.
+    await purgeEventIdsForTests(prisma, [eventId]);
   });
 });
