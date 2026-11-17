@@ -1,0 +1,23 @@
+/*
+ * Piko design tokens (see docs/design.md).
+ * Colors are estimated from the reference layout and checked for contrast:
+ * white on --color-primary >= 4.5:1, --color-ink on --color-accent >= 4.5:1.
+ */
+@theme {
+  --color-primary: #1f7a14;
+  --color-primary-hover: #17610f;
+  --color-accent: #8bd51a;
+  --color-accent-hover: #7ac114;
+  --color-surface: #ffffff;
+  --color-surface-muted: #f2f8ee;
+  --color-ink: #101a14;
+  --color-ink-muted: #5b6672;
+  --color-dark: #0f1914;
+  --color-line: #dfe8da;
+  --color-success: #1f7a14;
+  --color-warning: #8a5a00;
+  --color-danger: #b42318;
+
+  --radius-card: 1.25rem;
+  --shadow-card: 0 8px 24px -8px rgb(16 26 20 / 0.12);
+}

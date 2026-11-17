@@ -10,7 +10,7 @@
 |---|---|---|---|---|
 | T-001 | Создать Next.js + TS + Tailwind + ESLint, структура папок из architecture.md | — | `npm run dev` открывает пустую страницу; папки на месте | done |
 | T-002 | Инструменты: Prettier, Vitest, скрипты `lint`, `typecheck`, `test`, `.env.example`, `.gitignore` | T-001 | Все скрипты запускаются; AGENTS.md: заполнены команды | done |
-| T-003 | Токены дизайна и UI-кит: Button, Card, Badge, Input, ScoreRing, StepCard | T-001 | Страница `/dev/ui` показывает все компоненты; соответствие design.md | todo |
+| T-003 | Токены дизайна и UI-кит: Button, Card, Badge, Input, ScoreRing, StepCard | T-001 | Страница `/dev/ui` показывает все компоненты; соответствие design.md | done |
 | T-004 | i18n-каркас, русские тексты в словарях | T-001 | Тексты не захардкожены в компонентах | todo |
 | T-005 | Схема БД (Prisma) по модели данных, миграции, сид-данные | T-002 | Миграция применяется, сид создаёт демо-набор | todo |
 | T-006 | Авторизация и роли (admin, coach, parent), защита маршрутов `(app)` | T-005 | Чужие данные недоступны (тест) | todo |
