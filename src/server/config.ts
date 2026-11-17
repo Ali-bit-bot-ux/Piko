@@ -5,6 +5,7 @@ const envSchema = z.object({
   STORAGE: z.enum(["local", "cloud"]).default("local"),
   STORAGE_LOCAL_DIR: z.string().min(1).default(".data/storage"),
   DATABASE_URL: z.string().min(1).optional(),
+  APP_URL: z.url().default("http://localhost:3000"),
 });
 
 export type AppConfig = {
@@ -13,6 +14,8 @@ export type AppConfig = {
   storageLocalDir: string;
   /** Postgres connection string. Optional so tools that do not need the database still start. */
   databaseUrl?: string;
+  /** Public address of the site, used in links and QR codes (no trailing slash). */
+  appUrl: string;
 };
 
 export class ConfigError extends Error {
@@ -43,5 +46,6 @@ export function loadConfig(env: Env = process.env): AppConfig {
     storage: parsed.data.STORAGE,
     storageLocalDir: parsed.data.STORAGE_LOCAL_DIR,
     databaseUrl: parsed.data.DATABASE_URL,
+    appUrl: parsed.data.APP_URL.replace(/\/+$/, ""),
   };
 }

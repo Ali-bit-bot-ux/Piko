@@ -7,7 +7,15 @@ describe("loadConfig", () => {
       analysisProvider: "stub",
       storage: "local",
       storageLocalDir: ".data/storage",
+      appUrl: "http://localhost:3000",
     });
+  });
+
+  it("reads the public address and drops trailing slashes", () => {
+    expect(loadConfig({ APP_URL: "https://piko.example/" }).appUrl).toBe(
+      "https://piko.example",
+    );
+    expect(() => loadConfig({ APP_URL: "not a url" })).toThrow(/APP_URL/);
   });
 
   it("reads values from the environment", () => {

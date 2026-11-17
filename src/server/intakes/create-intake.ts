@@ -1,6 +1,7 @@
 import { z } from "zod";
 import type { PrismaClient } from "@/generated/prisma/client";
 import { ageProfileFor } from "@/lib/age-profile";
+import { parseIsoDate } from "@/lib/iso-date";
 import { canManageIntakes, type SessionUser } from "../auth/policy";
 import { getPrisma } from "../db/client";
 
@@ -40,10 +41,14 @@ export function createIntakeSchema(today: Date) {
         .max(2100, "birth_year_invalid"),
       tryoutDate: z
         .string("tryout_date_invalid")
-        .regex(/^\d{4}-\d{2}-\d{2}$/, "tryout_date_invalid")
-        .transform((value) => new Date(`${value}T00:00:00Z`))
-        .refine((date) => !Number.isNaN(date.getTime()), "tryout_date_invalid")
-        .refine((date) => date.getTime() >= startOfToday, "tryout_date_past"),
+        .transform((value) => parseIsoDate(value))
+        // zod keeps running later checks after a failed one, so they must accept null.
+        .refine((date) => date !== null, "tryout_date_invalid")
+        .refine(
+          (date) => date === null || date.getTime() >= startOfToday,
+          "tryout_date_past",
+        )
+        .transform((date) => date as Date),
     })
     .superRefine((value, ctx) => {
       // Field errors are reported separately; check the age only when both

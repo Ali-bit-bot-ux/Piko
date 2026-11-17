@@ -10,6 +10,9 @@ import {
 
 export type RecordResult = { event: Event; created: boolean };
 
+/** Anything with an `event` table: the client itself or a transaction. */
+export type EventDb = Pick<PrismaClient, "event">;
+
 type ObjectRef = {
   organizationId: string;
   intakeId?: string | null;
@@ -52,7 +55,7 @@ function isUniqueViolation(error: unknown): boolean {
  */
 export async function recordEvent(
   input: EventInput,
-  prisma: PrismaClient = getPrisma(),
+  prisma: EventDb = getPrisma(),
 ): Promise<RecordResult> {
   const parsed = eventInputSchema.safeParse(input);
   if (!parsed.success) {
@@ -125,7 +128,7 @@ export async function recordEvent(
 /** Events about one object (participant, intake or academy), oldest first. */
 export async function listEvents(
   ref: ObjectRef,
-  prisma: PrismaClient = getPrisma(),
+  prisma: EventDb = getPrisma(),
 ): Promise<Event[]> {
   return prisma.event.findMany({
     where: objectFilter(ref),

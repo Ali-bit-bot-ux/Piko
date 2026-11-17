@@ -15,6 +15,12 @@ export const routes = {
   intakeNew: "/intakes/new",
 } as const;
 
+/** Cabinet page of one intake. */
+export const intakePath = (id: string) => `/intakes/${id}`;
+
+/** Public registration page of one intake (the QR code points here). */
+export const joinPath = (id: string) => `/join/${id}`;
+
 /** Main navigation order. Keys match `nav` in the dictionary. */
 export const mainNav = [
   { key: "about", href: routes.about },

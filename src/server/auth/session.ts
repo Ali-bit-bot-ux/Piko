@@ -1,5 +1,6 @@
 import "server-only";
 import { redirect } from "next/navigation";
+import { connection } from "next/server";
 import { routes } from "@/lib/routes";
 import { getPrisma } from "../db/client";
 import { auth } from "./auth";
@@ -11,6 +12,9 @@ import { isStaff, type SessionUser } from "./policy";
  * Cache Components).
  */
 export async function getCurrentUser(): Promise<SessionUser | null> {
+  // Marks the render as request-time before anything random is generated
+  // (Next.js: "blocking-prerender-crypto").
+  await connection();
   const session = await auth();
   const id = session?.user?.id;
   if (!id) return null;

@@ -14,6 +14,10 @@ const today = new Date("2026-11-17T12:00:00Z");
 
 describe.skipIf(!hasDatabase)("createIntake (database)", () => {
   let prisma: PrismaClient;
+  // Counts only this academy's intakes: other test files run in parallel and
+  // create intakes in their own academies.
+  const countOwnIntakes = () =>
+    prisma.intake.count({ where: { organizationId: SEED_ORG_ID } });
   const created: string[] = [];
   const name = `Тестовый набор ${crypto.randomUUID()}`;
 
@@ -70,7 +74,7 @@ describe.skipIf(!hasDatabase)("createIntake (database)", () => {
   });
 
   it("does not create anything for invalid input", async () => {
-    const before = await prisma.intake.count();
+    const before = await countOwnIntakes();
     const result = await createIntake(
       { role: "director", organizationId: SEED_ORG_ID },
       { name, birthYear: "2022", tryoutDate: "2026-12-01" },
@@ -80,11 +84,11 @@ describe.skipIf(!hasDatabase)("createIntake (database)", () => {
       ok: false,
       errors: { birthYear: "age_out_of_range" },
     });
-    expect(await prisma.intake.count()).toBe(before);
+    expect(await countOwnIntakes()).toBe(before);
   });
 
   it("refuses a coach and creates nothing", async () => {
-    const before = await prisma.intake.count();
+    const before = await countOwnIntakes();
     await expect(
       createIntake(
         { role: "coach", organizationId: SEED_ORG_ID },
@@ -92,6 +96,6 @@ describe.skipIf(!hasDatabase)("createIntake (database)", () => {
         { prisma, today },
       ),
     ).rejects.toThrow(ForbiddenError);
-    expect(await prisma.intake.count()).toBe(before);
+    expect(await countOwnIntakes()).toBe(before);
   });
 });
