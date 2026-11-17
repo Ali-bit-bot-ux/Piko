@@ -75,8 +75,8 @@ describe("median", () => {
 });
 
 describe("calculateScore", () => {
-  // docs/scoring.md says this example gives 3.80, but 0.8+0.6+0.6+0.6+0.4+0.75 = 3.75.
-  it("computes the U10-U11 example from docs/scoring.md (3.75, the doc says 3.80)", () => {
+  // 0.8+0.6+0.6+0.6+0.4+0.75 = 3.75 (docs/scoring.md had 3.80 by mistake; fixed).
+  it("computes the U10-U11 example from docs/scoring.md (3.75)", () => {
     const result = calculateScore("U10_U11", {
       ball_control: [4],
       passing: [3],
