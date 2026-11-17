@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
+import { defaultLocale, getDictionary } from "@/lib/i18n";
 import "./globals.css";
 
 const inter = Inter({
@@ -7,14 +8,19 @@ const inter = Inter({
   subsets: ["latin", "cyrillic"],
 });
 
+const { meta } = getDictionary();
+
 export const metadata: Metadata = {
-  title: "Piko",
-  description: "Честный и понятный отбор в футбольные академии",
+  title: meta.title,
+  description: meta.description,
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="ru" className={`${inter.variable} h-full antialiased`}>
+    <html
+      lang={defaultLocale}
+      className={`${inter.variable} h-full antialiased`}
+    >
       <body className="min-h-full flex flex-col">{children}</body>
     </html>
   );

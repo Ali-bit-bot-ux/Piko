@@ -1,4 +1,5 @@
 import { cn } from "@/lib/cn";
+import { getDictionary, interpolate } from "@/lib/i18n";
 import { ringGeometry } from "@/lib/score-ring";
 
 export type ScoreRingSize = "sm" | "md" | "lg";
@@ -29,11 +30,16 @@ export function ScoreRing({
   className,
 }: ScoreRingProps) {
   const { circumference, dashOffset } = ringGeometry(value, max, RADIUS);
+  const t = getDictionary().common;
 
   return (
     <div
       role="img"
-      aria-label={`${label}: ${value.toFixed(2)} из ${max}`}
+      aria-label={interpolate(t.scoreAria, {
+        label,
+        value: value.toFixed(2),
+        max,
+      })}
       className={cn("relative inline-flex shrink-0", sizes[size], className)}
     >
       <svg viewBox="0 0 100 100" className="size-full -rotate-90" aria-hidden>
@@ -62,7 +68,9 @@ export function ScoreRing({
         className="absolute inset-0 flex flex-col items-center justify-center leading-none"
       >
         <span className="font-bold tracking-tight">{value.toFixed(2)}</span>
-        <span className="mt-1 text-xs text-ink-muted">из {max}</span>
+        <span className="mt-1 text-xs text-ink-muted">
+          {interpolate(t.scoreOutOf, { max })}
+        </span>
       </div>
     </div>
   );

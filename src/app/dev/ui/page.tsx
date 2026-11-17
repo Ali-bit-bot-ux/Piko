@@ -8,6 +8,7 @@ import {
   ScoreRing,
   StepCard,
 } from "@/components/ui";
+import { getDictionary } from "@/lib/i18n";
 
 export const metadata: Metadata = {
   title: "UI kit (dev)",
@@ -32,6 +33,7 @@ function Section({
 // Developer-only page: not available in production builds.
 export default function UiKitPage() {
   if (process.env.NODE_ENV === "production") notFound();
+  const { status } = getDictionary();
 
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-10 px-4 py-8">
@@ -50,10 +52,10 @@ export default function UiKitPage() {
 
       <Section title="Badge">
         <div className="flex flex-wrap gap-2">
-          <Badge variant="success">Зачислен</Badge>
-          <Badge variant="accent">Резерв</Badge>
-          <Badge variant="warning">Повторный просмотр</Badge>
-          <Badge variant="danger">Не зачислен</Badge>
+          <Badge variant="success">{status.enrolled}</Badge>
+          <Badge variant="accent">{status.reserve}</Badge>
+          <Badge variant="warning">{status.review}</Badge>
+          <Badge variant="danger">{status.rejected}</Badge>
           <Badge>Черновик</Badge>
         </div>
       </Section>
