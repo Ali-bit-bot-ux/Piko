@@ -12,6 +12,7 @@ export const routes = {
   signup: "/signup",
   /** Cabinet home: the list of intakes. */
   dashboard: "/dashboard",
+  intakeNew: "/intakes/new",
 } as const;
 
 /** Main navigation order. Keys match `nav` in the dictionary. */

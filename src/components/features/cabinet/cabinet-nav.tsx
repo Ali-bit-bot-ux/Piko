@@ -4,7 +4,12 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/cn";
 
-export type CabinetNavItem = { href: string; label: string };
+export type CabinetNavItem = {
+  href: string;
+  label: string;
+  /** Other paths that belong to this section, e.g. "/intakes". */
+  matchPrefixes?: readonly string[];
+};
 
 /** Sections of the cabinet. Marks the current one with aria-current. */
 export function CabinetNav({
@@ -20,8 +25,10 @@ export function CabinetNav({
     <nav aria-label={label} className="border-b border-line bg-surface">
       <ul className="mx-auto flex w-full max-w-6xl gap-1 overflow-x-auto px-4 sm:px-6">
         {items.map((item) => {
-          const current =
-            pathname === item.href || pathname.startsWith(`${item.href}/`);
+          const current = [item.href, ...(item.matchPrefixes ?? [])].some(
+            (prefix) =>
+              pathname === prefix || pathname.startsWith(`${prefix}/`),
+          );
           return (
             <li key={item.href}>
               <Link

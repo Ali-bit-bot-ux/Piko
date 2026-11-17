@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { canAccessOrganization, hasRole, isStaff } from "./policy";
+import {
+  canAccessOrganization,
+  canManageIntakes,
+  hasRole,
+  isStaff,
+} from "./policy";
 
 describe("isStaff", () => {
   it("accepts admin, director and coach", () => {
@@ -10,6 +15,15 @@ describe("isStaff", () => {
 
   it("rejects parents", () => {
     expect(isStaff({ role: "parent" })).toBe(false);
+  });
+});
+
+describe("canManageIntakes", () => {
+  it("allows admin and director, not coach or parent", () => {
+    expect(canManageIntakes({ role: "admin" })).toBe(true);
+    expect(canManageIntakes({ role: "director" })).toBe(true);
+    expect(canManageIntakes({ role: "coach" })).toBe(false);
+    expect(canManageIntakes({ role: "parent" })).toBe(false);
   });
 });
 

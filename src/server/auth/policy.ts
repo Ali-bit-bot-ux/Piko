@@ -17,6 +17,11 @@ export function isStaff(user: Pick<SessionUser, "role">): boolean {
   return STAFF_ROLES.includes(user.role);
 }
 
+/** Who may create and change intakes. Coaches only run trials. */
+export function canManageIntakes(user: Pick<SessionUser, "role">): boolean {
+  return user.role === "admin" || user.role === "director";
+}
+
 export function hasRole(
   user: Pick<SessionUser, "role">,
   ...roles: readonly Role[]

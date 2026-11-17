@@ -1,11 +1,13 @@
 import type { Metadata } from "next";
 import { IntakeCard } from "@/components/features/cabinet/intake-card";
-import { Card } from "@/components/ui";
+import { ButtonLink, Card } from "@/components/ui";
 import { getDictionary } from "@/lib/i18n";
-import { listIntakesForUser } from "@/server/db/intakes";
+import { routes } from "@/lib/routes";
+import { canManageIntakes } from "@/server/auth/policy";
 import { requireStaff } from "@/server/auth/session";
+import { listIntakesForUser } from "@/server/db/intakes";
 
-const t = getDictionary().intakes;
+const { intakes: t, intakeForm } = getDictionary();
 
 export const metadata: Metadata = {
   title: t.title,
@@ -20,7 +22,14 @@ export default async function DashboardPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-2xl font-bold tracking-tight">{t.title}</h1>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h1 className="text-2xl font-bold tracking-tight">{t.title}</h1>
+        {canManageIntakes(user) ? (
+          <ButtonLink href={routes.intakeNew} variant="accent">
+            {intakeForm.create}
+          </ButtonLink>
+        ) : null}
+      </div>
 
       {intakes.length === 0 ? (
         <Card variant="muted">
