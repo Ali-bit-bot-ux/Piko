@@ -10,6 +10,7 @@ export const routes = {
   pricing: "/pricing",
   login: "/login",
   signup: "/signup",
+  dashboard: "/dashboard",
 } as const;
 
 /** Main navigation order. Keys match `nav` in the dictionary. */

@@ -3,6 +3,7 @@
 import { config } from "dotenv";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../src/generated/prisma/client";
+import { hashPassword } from "../src/server/auth/password";
 
 config({ path: [".env.local", ".env"], quiet: true });
 
@@ -17,6 +18,10 @@ const ids = {
     "44444444-4444-4444-8444-444444444443",
   ],
 } as const;
+
+// Local development password for the demo staff accounts. The seed refuses to
+// run in production, so this value never reaches a real database.
+const DEMO_PASSWORD = "piko-demo-2026";
 
 const trialTypes = [
   "sprint_20m",
@@ -45,25 +50,29 @@ async function main() {
       create: { id: ids.org, name: "Демо-академия" },
     });
 
+    const passwordHash = await hashPassword(DEMO_PASSWORD);
+
     await prisma.user.upsert({
       where: { id: ids.director },
-      update: {},
+      update: { passwordHash },
       create: {
         id: ids.director,
         email: "demo-director@example.invalid",
         name: "Демо Директор",
         role: "director",
+        passwordHash,
         organizationId: ids.org,
       },
     });
     await prisma.user.upsert({
       where: { id: ids.coach },
-      update: {},
+      update: { passwordHash },
       create: {
         id: ids.coach,
         email: "demo-coach@example.invalid",
         name: "Демо Тренер",
         role: "coach",
+        passwordHash,
         organizationId: ids.org,
       },
     });

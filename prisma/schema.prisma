@@ -114,6 +114,9 @@ model User {
   email          String   @unique
   name           String
   role           Role
+  /// scrypt hash (see src/server/auth/password.ts). Null means the user cannot
+  /// sign in with a password (parents use report links, not accounts).
+  passwordHash   String?
   /// Null for parents, who are not tied to an academy.
   organizationId String?  @db.Uuid
   createdAt      DateTime @default(now())
