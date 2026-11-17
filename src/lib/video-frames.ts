@@ -27,8 +27,9 @@ export function frameTimes(durationSec: number, count: number): number[] {
   if (!Number.isFinite(durationSec) || durationSec <= 0) return [];
   const n = clampFrameCount(count);
   const step = durationSec / n;
-  return Array.from({ length: n }, (_, i) =>
-    Math.round((i + 0.5) * step * 1000) / 1000,
+  return Array.from(
+    { length: n },
+    (_, i) => Math.round((i + 0.5) * step * 1000) / 1000,
   );
 }
 

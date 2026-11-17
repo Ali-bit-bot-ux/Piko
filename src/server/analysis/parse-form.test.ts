@@ -1,9 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { parseAnalysisForm } from "./parse-form";
 
-const png = () => new File([new Uint8Array([0x89, 0x50, 0x4e, 0x47])], "f.png", {
-  type: "image/png",
-});
+const png = () =>
+  new File([new Uint8Array([0x89, 0x50, 0x4e, 0x47])], "f.png", {
+    type: "image/png",
+  });
 
 function form(entries: [string, string | File][]) {
   const data = new FormData();
@@ -26,7 +27,9 @@ describe("parseAnalysisForm", () => {
     expect(parsed?.intakeId).toBe("i");
     expect(parsed?.frames.map((f) => f.timeSec)).toEqual([1.5, 4]);
     expect(parsed?.frames[0].mimeType).toBe("image/png");
-    expect(Array.from(parsed!.frames[0].data)).toEqual([0x89, 0x50, 0x4e, 0x47]);
+    expect(Array.from(parsed!.frames[0].data)).toEqual([
+      0x89, 0x50, 0x4e, 0x47,
+    ]);
   });
 
   it("refuses malformed forms", async () => {

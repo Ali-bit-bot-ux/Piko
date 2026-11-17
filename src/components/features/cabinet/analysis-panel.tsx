@@ -138,7 +138,10 @@ export function AnalysisPanel({
             ? texts.cancelled
             : texts.errors[caught.code],
         );
-      } else if (caught instanceof DOMException && caught.name === "AbortError") {
+      } else if (
+        caught instanceof DOMException &&
+        caught.name === "AbortError"
+      ) {
         setError(texts.cancelled);
       } else {
         setError(texts.errors.generic);
@@ -152,10 +155,7 @@ export function AnalysisPanel({
   const byKey = new Map(analysis?.suggestions.map((s) => [s.criterionKey, s]));
 
   return (
-    <section
-      aria-labelledby="analysis-title"
-      className="flex flex-col gap-4"
-    >
+    <section aria-labelledby="analysis-title" className="flex flex-col gap-4">
       <div className="flex flex-col gap-1">
         <div className="flex flex-wrap items-center gap-2">
           <h2 id="analysis-title" className="text-lg font-bold tracking-tight">

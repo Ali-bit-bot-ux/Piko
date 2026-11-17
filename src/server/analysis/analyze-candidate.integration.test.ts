@@ -4,10 +4,7 @@ import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import type { PrismaClient } from "@/generated/prisma/client";
 import { getLatestAnalysisForUser } from "../db/analyses";
 import { criterionKeys } from "../scoring";
-import {
-  MAX_FRAMES_TOTAL_BYTES,
-  analyzeCandidate,
-} from "./analyze-candidate";
+import { MAX_FRAMES_TOTAL_BYTES, analyzeCandidate } from "./analyze-candidate";
 import { StubAnalysisProvider } from "./stub-provider";
 import {
   AnalysisError,
@@ -54,7 +51,11 @@ describe.skipIf(!hasDatabase)("analyzeCandidate (database)", () => {
     frames: [frame(1), frame(5)],
     ...overrides,
   });
-  const run = (u: ReturnType<typeof user>, i: unknown, provider?: AnalysisProvider) =>
+  const run = (
+    u: Parameters<typeof analyzeCandidate>[0],
+    i: unknown,
+    provider?: AnalysisProvider,
+  ) =>
     analyzeCandidate(u, i, {
       client: prisma,
       provider: provider ?? new StubAnalysisProvider(),
@@ -119,7 +120,9 @@ describe.skipIf(!hasDatabase)("analyzeCandidate (database)", () => {
     await prisma.intake.deleteMany({
       where: { id: { in: [intakeId, finishedIntakeId, otherIntakeId] } },
     });
-    await prisma.user.deleteMany({ where: { id: { in: [coachId, outsiderId] } } });
+    await prisma.user.deleteMany({
+      where: { id: { in: [coachId, outsiderId] } },
+    });
     await prisma.organization.deleteMany({
       where: { id: { in: [orgId, otherOrgId] } },
     });
@@ -189,7 +192,10 @@ describe.skipIf(!hasDatabase)("analyzeCandidate (database)", () => {
       code: "invalid",
     });
     expect(
-      await run(user(coachId), input({ frames: [frame(1, new Uint8Array(9))] })),
+      await run(
+        user(coachId),
+        input({ frames: [frame(1, new Uint8Array(9))] }),
+      ),
     ).toEqual({ ok: false, code: "invalid" });
     expect(await run(user(coachId), input({ intakeId: "nope" }))).toEqual({
       ok: false,
@@ -208,9 +214,10 @@ describe.skipIf(!hasDatabase)("analyzeCandidate (database)", () => {
   });
 
   it("refuses other academies, foreign children, closed intakes and non-staff", async () => {
-    expect(
-      await run(user(outsiderId, otherOrgId), input()),
-    ).toEqual({ ok: false, code: "not_found" });
+    expect(await run(user(outsiderId, otherOrgId), input())).toEqual({
+      ok: false,
+      code: "not_found",
+    });
     expect(
       await run(user(coachId), input({ candidateId: otherChildId })),
     ).toEqual({ ok: false, code: "not_found" });
@@ -244,7 +251,9 @@ describe.skipIf(!hasDatabase)("analyzeCandidate (database)", () => {
     expect(JSON.stringify(log.mock.calls)).not.toContain("secret");
     log.mockRestore();
     expect(
-      await prisma.analysis.count({ where: { provider: "claude", candidateId: childId } }),
+      await prisma.analysis.count({
+        where: { provider: "claude", candidateId: childId },
+      }),
     ).toBe(0);
   });
 });
