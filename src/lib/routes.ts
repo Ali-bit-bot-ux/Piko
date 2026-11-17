@@ -18,6 +18,10 @@ export const routes = {
 /** Cabinet page of one intake. */
 export const intakePath = (id: string) => `/intakes/${id}`;
 
+/** Stopwatch screen of one test of an intake. */
+export const trialPath = (intakeId: string, type: string) =>
+  `/intakes/${intakeId}/trials/${type}`;
+
 /** Public registration page of one intake (the QR code points here). */
 export const joinPath = (id: string) => `/join/${id}`;
 

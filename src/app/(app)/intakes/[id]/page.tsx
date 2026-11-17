@@ -4,9 +4,9 @@ import { notFound } from "next/navigation";
 import { z } from "zod";
 import { CandidateList } from "@/components/features/cabinet/candidate-list";
 import { IntakeCard } from "@/components/features/cabinet/intake-card";
-import { Button, Card } from "@/components/ui";
+import { Button, ButtonLink, Card } from "@/components/ui";
 import { getDictionary } from "@/lib/i18n";
-import { intakePath, routes } from "@/lib/routes";
+import { intakePath, routes, trialPath } from "@/lib/routes";
 import { canManageIntakes } from "@/server/auth/policy";
 import { requireStaff } from "@/server/auth/session";
 import { loadConfig } from "@/server/config";
@@ -16,9 +16,10 @@ import {
 } from "@/server/db/candidates";
 import { findIntakeForUser } from "@/server/db/intakes";
 import { qrSvg, registrationUrl } from "@/server/intakes/qr";
+import { timedTrialTypes } from "@/server/trials/record-measurement";
 import { publishIntakeAction } from "./actions";
 
-const t = getDictionary().intakeDetail;
+const { intakeDetail: t, trials } = getDictionary();
 
 export const metadata: Metadata = {
   robots: { index: false, follow: false },
@@ -99,6 +100,26 @@ export default async function IntakePage(props: PageProps<"/intakes/[id]">) {
           </>
         ) : null}
       </Card>
+
+      {intake.status === "open" || intake.status === "testing" ? (
+        <Card className="flex flex-col gap-3">
+          <h2 className="text-lg font-bold tracking-tight">{trials.title}</h2>
+          <p className="text-ink-muted">{trials.hint}</p>
+          <ul className="flex flex-col gap-2">
+            {timedTrialTypes.map((type) => (
+              <li key={type}>
+                <ButtonLink
+                  href={trialPath(intake.id, type)}
+                  variant="secondary"
+                  className="w-full justify-between sm:w-auto"
+                >
+                  {trials.types[type]}
+                </ButtonLink>
+              </li>
+            ))}
+          </ul>
+        </Card>
+      ) : null}
 
       <CandidateList
         action={intakePath(intake.id)}
