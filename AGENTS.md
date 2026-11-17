@@ -50,10 +50,13 @@ Next.js (App Router) + TypeScript, один репозиторий. Подтве
 - `react-best-practices`: производительность React и Next.js.
 - `composition-patterns`: архитектура компонентов.
 
-## Команды (заполнить после T-002)
-- установка: `npm install`
+## Команды
+- установка: `npm install`; переменные окружения: скопировать `.env.example` в `.env.local`
 - разработка: `npm run dev`
-- проверка: `npm run lint`, `npm run typecheck`, `npm test`
+- проверка: `npm run lint`, `npm run typecheck`, `npm test`, `npm run format:check`
+- сборка: `npm run build`
+- тесты: `npm run test:watch`, `npm run test:coverage` (порог 80% для `src/server` и `src/lib`)
+- форматирование: `npm run format` (Prettier, только `src` и `tests`)
 
 <!-- BEGIN:nextjs-agent-rules -->
 
