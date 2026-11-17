@@ -10,6 +10,7 @@ export const routes = {
   pricing: "/pricing",
   login: "/login",
   signup: "/signup",
+  /** Cabinet home: the list of intakes. */
   dashboard: "/dashboard",
 } as const;
 

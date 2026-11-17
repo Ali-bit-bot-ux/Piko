@@ -133,6 +133,13 @@ describe.skipIf(!hasDatabase)("authentication and academy isolation", () => {
       expect(intakes.some((i) => i.id === otherIntakeId)).toBe(false);
     });
 
+    it("includes the number of candidates for each intake", async () => {
+      const demo = (await listIntakesForUser(director, prisma)).find(
+        (i) => i.name === "Демо-набор 2015",
+      );
+      expect(demo?._count.candidates).toBe(3);
+    });
+
     it("hides another academy's intake as if it did not exist", async () => {
       expect(
         await findIntakeForUser(director, otherIntakeId, prisma),

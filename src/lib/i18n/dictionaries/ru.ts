@@ -46,6 +46,31 @@ export const ru = {
       parent: "Родитель",
     },
   },
+  cabinet: {
+    navLabel: "Разделы кабинета",
+    nav: {
+      intakes: "Наборы",
+    },
+  },
+  intakes: {
+    title: "Наборы",
+    empty: "Здесь появятся ваши наборы.",
+    listLabel: "Список наборов",
+    birthYear: "Год рождения: {year}",
+    candidates: "Кандидатов: {count}",
+    tryoutDate: "Испытания: {date}",
+    status: {
+      draft: "Черновик",
+      open: "Идёт регистрация",
+      testing: "Идут испытания",
+      finished: "Завершён",
+    },
+    ageProfiles: {
+      U7_U9: "U7–U9",
+      U10_U11: "U10–U11",
+      U12_U14: "U12–U14",
+    },
+  },
   header: {
     homeAria: "Piko, на главную",
     mainNav: "Основная навигация",

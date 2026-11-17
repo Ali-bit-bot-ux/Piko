@@ -30,6 +30,7 @@ export async function listIntakesForUser(
   if (!isStaff(user) || user.organizationId === null) return [];
   return prisma.intake.findMany({
     where: { organizationId: user.organizationId },
-    orderBy: { tryoutDate: "desc" },
+    orderBy: [{ tryoutDate: "desc" }, { createdAt: "desc" }],
+    include: { _count: { select: { candidates: true } } },
   });
 }

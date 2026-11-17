@@ -1,6 +1,8 @@
+import { CabinetNav } from "@/components/features/cabinet/cabinet-nav";
 import { Logo } from "@/components/features/site/logo";
 import { Button } from "@/components/ui";
 import { getDictionary } from "@/lib/i18n";
+import { routes } from "@/lib/routes";
 import { requireStaff } from "@/server/auth/session";
 import { logoutAction } from "./actions";
 
@@ -10,7 +12,7 @@ import { logoutAction } from "./actions";
  */
 export async function AuthGate({ children }: { children: React.ReactNode }) {
   const user = await requireStaff();
-  const t = getDictionary().dashboard;
+  const { dashboard: t, cabinet } = getDictionary();
 
   return (
     <>
@@ -29,6 +31,10 @@ export async function AuthGate({ children }: { children: React.ReactNode }) {
           </div>
         </div>
       </header>
+      <CabinetNav
+        label={cabinet.navLabel}
+        items={[{ href: routes.dashboard, label: cabinet.nav.intakes }]}
+      />
       <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 sm:px-6">
         {children}
       </main>
