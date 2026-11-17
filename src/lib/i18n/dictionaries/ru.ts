@@ -1,5 +1,6 @@
 import { landingRu } from "./landing.ru";
 import { resultsRu } from "./results.ru";
+import { reportRu } from "./report.ru";
 
 /**
  * Russian UI texts. This object defines the shape of every dictionary:
@@ -222,6 +223,7 @@ export const ru = {
     rights: "© Piko. Все права защищены.",
   },
   results: resultsRu,
+  report: reportRu,
   // Decision statuses, see docs/scoring.md.
   status: {
     enrolled: "Зачислен",
