@@ -1,3 +1,4 @@
+import { analysisRu } from "./analysis.ru";
 import { landingRu } from "./landing.ru";
 import { resultsRu } from "./results.ru";
 
@@ -234,6 +235,7 @@ export const ru = {
     sections: "Разделы",
     rights: "© Piko. Все права защищены.",
   },
+  analysis: analysisRu,
   results: resultsRu,
   // Decision statuses, see docs/scoring.md.
   status: {

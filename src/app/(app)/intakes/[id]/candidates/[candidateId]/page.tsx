@@ -12,6 +12,7 @@ import { intakePath } from "@/lib/routes";
 import { requireStaff } from "@/server/auth/session";
 import { getCandidateResultForUser } from "@/server/db/candidate-results";
 import { scoreCriterionAction } from "./actions";
+import { AnalysisSection } from "./analysis-section";
 
 const { results, candidates, trials } = getDictionary();
 const { candidate: t, criteria: criterionTitles, scale } = results;
@@ -168,6 +169,14 @@ export default async function CandidateResultPage(
           />
         ))}
       </section>
+
+      <AnalysisSection
+        user={user}
+        intakeId={intake.id}
+        candidateId={candidate.id}
+        criteria={criteria}
+        canScore={view.canScore}
+      />
     </div>
   );
 }
