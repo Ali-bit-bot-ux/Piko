@@ -5,7 +5,7 @@ import { getPrisma } from "../db/client";
 import { findIntakeForUser } from "../db/intakes";
 import { recordEvent } from "../events";
 
-/** Tests measured with a stopwatch (the others are counts, added in T-031). */
+/** Tests measured with a stopwatch. */
 export const timedTrialTypes = [
   "sprint_20m",
   "shuttle_5_10_5",
@@ -13,32 +13,67 @@ export const timedTrialTypes = [
 ] as const;
 export type TimedTrialType = (typeof timedTrialTypes)[number];
 
+/** Tests counted as successes out of ATTEMPTS_OUT_OF tries. */
+export const countedTrialTypes = ["passing", "shooting"] as const;
+export type CountedTrialType = (typeof countedTrialTypes)[number];
+
+export const trialTypes = [...timedTrialTypes, ...countedTrialTypes] as const;
+export type TrialType = (typeof trialTypes)[number];
+
+/** Passing and shooting: successes out of 10 tries (docs/scoring.md). */
+export const COUNT_MAX = 10;
+
+export function isTimedTrial(type: TrialType): type is TimedTrialType {
+  return (timedTrialTypes as readonly string[]).includes(type);
+}
+
+/** Seconds, stored with hundredths of a second. */
+export const timedValueSchema = z
+  .number()
+  .min(0.1)
+  .max(300)
+  .transform((value) => Math.round(value * 100) / 100);
+
+/** A whole number of successes, 0..10. */
+export const countedValueSchema = z.number().int().min(0).max(COUNT_MAX);
+
+/** The value rules of one test: seconds for timed tests, a count for the rest. */
+export function valueSchemaFor(type: TrialType) {
+  return isTimedTrial(type) ? timedValueSchema : countedValueSchema;
+}
+
 /** Two attempts per test; the better one counts (docs/scoring.md). */
 export const MAX_ATTEMPTS = 2;
 
-export const recordMeasurementSchema = z.object({
+const commonFields = {
   intakeId: z.uuid(),
-  trialType: z.enum(timedTrialTypes),
   candidateId: z.uuid(),
   attempt: z.number().int().min(1).max(MAX_ATTEMPTS),
-  /** Seconds. Stored with hundredths of a second. */
-  value: z
-    .number()
-    .min(0.1)
-    .max(300)
-    .transform((value) => Math.round(value * 100) / 100),
   /**
    * Chosen by the sender. Sending the same save again (a retry after a lost
    * connection) changes nothing: it is also the journal event id.
    */
   clientEventId: z.uuid(),
   occurredAtDevice: z.coerce.date().optional(),
-});
+};
+
+export const recordMeasurementSchema = z.union([
+  z.object({
+    ...commonFields,
+    trialType: z.enum(timedTrialTypes),
+    value: timedValueSchema,
+  }),
+  z.object({
+    ...commonFields,
+    trialType: z.enum(countedTrialTypes),
+    value: countedValueSchema,
+  }),
+]);
 
 export type RecordMeasurementInput = z.input<typeof recordMeasurementSchema>;
 
 export type RecordMeasurementResult =
-  | { ok: true; duplicate: boolean }
+  | { ok: true; duplicate: boolean; measurementId: string }
   | {
       ok: false;
       code: "invalid" | "forbidden" | "not_found" | "closed" | "attempt_taken";
@@ -49,7 +84,7 @@ function isUniqueViolation(error: unknown): boolean {
 }
 
 /**
- * Saves one stopwatch result for a child. Only staff of the intake's own
+ * Saves one result (stopwatch time or a count of successes) for a child. Only staff of the intake's own
  * academy; the intake must be taking part (open or testing). The first result
  * of a child also marks them as arrived. Writes the journal events in the
  * same transaction.
@@ -94,13 +129,7 @@ export async function recordMeasurement(
   try {
     return await prisma.$transaction(async (tx) => {
       // A retry of a save that already went through.
-      const already = await tx.event.findUnique({
-        where: { id: data.clientEventId },
-        select: { id: true },
-      });
-      if (already) return { ok: true, duplicate: true } as const;
-
-      const taken = await tx.measurement.findUnique({
+      const existing = await tx.measurement.findUnique({
         where: {
           candidateId_trialId_attempt: {
             candidateId: candidate.id,
@@ -110,15 +139,26 @@ export async function recordMeasurement(
         },
         select: { id: true },
       });
-      if (taken) return { ok: false, code: "attempt_taken" } as const;
+      const already = await tx.event.findUnique({
+        where: { id: data.clientEventId },
+        select: { id: true },
+      });
+      if (already && existing) {
+        return {
+          ok: true,
+          duplicate: true,
+          measurementId: existing.id,
+        } as const;
+      }
+      if (existing) return { ok: false, code: "attempt_taken" } as const;
 
-      await tx.measurement.create({
+      const created = await tx.measurement.create({
         data: {
           candidateId: candidate.id,
           trialId: trial.id,
           attempt: data.attempt,
           value: data.value,
-          source: "timer",
+          source: isTimedTrial(data.trialType) ? "timer" : "manual",
           recordedById: user.id,
         },
       });
@@ -164,7 +204,11 @@ export async function recordMeasurement(
         },
         tx,
       );
-      return { ok: true, duplicate: false } as const;
+      return {
+        ok: true,
+        duplicate: false,
+        measurementId: created.id,
+      } as const;
     });
   } catch (error) {
     // Two people saved the same attempt at the same moment.

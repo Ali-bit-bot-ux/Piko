@@ -1,13 +1,14 @@
 import type { PrismaClient } from "@/generated/prisma/client";
 import { isStaff, type SessionUser } from "../auth/policy";
 import { getPrisma } from "./client";
+import type { TrialType } from "../trials/record-measurement";
 import { findIntakeForUser } from "./intakes";
 
 export type CandidateAttempts = {
   candidateId: string;
   fullName: string;
   /** Saved results, in attempt order. */
-  attempts: { attempt: number; value: number }[];
+  attempts: { id: string; attempt: number; value: number }[];
 };
 
 /**
@@ -17,7 +18,7 @@ export type CandidateAttempts = {
 export async function listTrialProgress(
   user: Pick<SessionUser, "role" | "organizationId">,
   intakeId: string,
-  trialType: "sprint_20m" | "shuttle_5_10_5" | "dribbling",
+  trialType: TrialType,
   prisma: PrismaClient = getPrisma(),
 ): Promise<CandidateAttempts[] | null> {
   if (!isStaff(user)) return null;
@@ -33,7 +34,7 @@ export async function listTrialProgress(
       measurements: {
         where: { trial: { type: trialType } },
         orderBy: { attempt: "asc" },
-        select: { attempt: true, value: true },
+        select: { id: true, attempt: true, value: true },
       },
     },
   });

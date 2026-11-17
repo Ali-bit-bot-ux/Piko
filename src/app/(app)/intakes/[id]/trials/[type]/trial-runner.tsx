@@ -5,11 +5,16 @@ import { Button, Card, Select } from "@/components/ui";
 import { interpolate } from "@/lib/i18n";
 import { formatStopwatch, toSeconds } from "@/lib/stopwatch";
 import { recordMeasurementAction } from "./actions";
+import {
+  AttemptsPanel,
+  type CorrectionTexts,
+  type SavedAttempt,
+} from "./attempts-panel";
 
 export type RunnerCandidate = {
   candidateId: string;
   fullName: string;
-  attempts: { attempt: number; value: number }[];
+  attempts: SavedAttempt[];
 };
 
 export type TrialRunnerTexts = {
@@ -48,11 +53,13 @@ export function TrialRunner({
   trialType,
   candidates: initial,
   texts,
+  correction,
 }: {
   intakeId: string;
   trialType: "sprint_20m" | "shuttle_5_10_5" | "dribbling";
   candidates: RunnerCandidate[];
   texts: TrialRunnerTexts;
+  correction: CorrectionTexts;
 }) {
   const [candidates, setCandidates] = useState(initial);
   const [candidateId, setCandidateId] = useState("");
@@ -123,7 +130,13 @@ export function TrialRunner({
           current.map((c) =>
             c.candidateId === selected.candidateId &&
             !c.attempts.some((a) => a.attempt === attempt)
-              ? { ...c, attempts: [...c.attempts, { attempt, value }] }
+              ? {
+                  ...c,
+                  attempts: [
+                    ...c.attempts,
+                    { id: result.measurementId, attempt, value },
+                  ],
+                }
               : c,
           ),
         );
@@ -249,16 +262,23 @@ export function TrialRunner({
           {selected.attempts.length === 0 ? (
             <p className="text-sm text-ink-muted">{texts.noAttempts}</p>
           ) : (
-            <ul className="flex flex-col gap-1 text-sm text-ink">
-              {selected.attempts.map((a) => (
-                <li key={a.attempt}>
-                  {interpolate(texts.attemptLine, {
-                    attempt: a.attempt,
-                    value: a.value.toFixed(2),
-                  })}
-                </li>
-              ))}
-            </ul>
+            <AttemptsPanel
+              intakeId={intakeId}
+              kind="time"
+              attempts={selected.attempts}
+              lineTemplate={texts.attemptLine}
+              texts={correction}
+              onCorrected={(id, value) =>
+                setCandidates((current) =>
+                  current.map((c) => ({
+                    ...c,
+                    attempts: c.attempts.map((a) =>
+                      a.id === id ? { ...a, value } : a,
+                    ),
+                  })),
+                )
+              }
+            />
           )}
           {best !== null ? (
             <p className="text-sm font-semibold text-primary">

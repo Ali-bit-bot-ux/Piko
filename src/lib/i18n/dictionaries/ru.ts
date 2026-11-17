@@ -1,3 +1,5 @@
+import { resultsRu } from "./results.ru";
+
 /**
  * Russian UI texts. This object defines the shape of every dictionary:
  * other locales must provide the same keys (see ./index.ts).
@@ -217,6 +219,7 @@ export const ru = {
     sections: "Разделы",
     rights: "© Piko. Все права защищены.",
   },
+  results: resultsRu,
   // Decision statuses, see docs/scoring.md.
   status: {
     enrolled: "Зачислен",
