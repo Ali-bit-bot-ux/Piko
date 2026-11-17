@@ -100,17 +100,38 @@ describe("StubAnalysisProvider", () => {
 
 describe("createAnalysisProvider", () => {
   it("returns the stub provider", () => {
-    expect(createAnalysisProvider({ analysisProvider: "stub" }).name).toBe(
-      "stub",
-    );
+    expect(
+      createAnalysisProvider({
+        analysisProvider: "stub",
+        anthropicModel: "claude-haiku-5-5",
+      }).name,
+    ).toBe("stub");
+  });
+
+  it("builds the Claude provider when a key is configured", () => {
+    const provider = createAnalysisProvider({
+      analysisProvider: "claude",
+      anthropicApiKey: "test-key",
+      anthropicModel: "claude-haiku-5-5",
+    });
+    expect(provider.name).toBe("claude");
+  });
+
+  it("asks for the API key when Claude is chosen without one", () => {
+    expect(() =>
+      createAnalysisProvider({
+        analysisProvider: "claude",
+        anthropicModel: "claude-haiku-5-5",
+      }),
+    ).toThrow(/ANTHROPIC_API_KEY/);
   });
 
   it("fails clearly for providers that are not implemented yet", () => {
     expect(() =>
-      createAnalysisProvider({ analysisProvider: "claude" }),
-    ).toThrow(/T-042/);
-    expect(() =>
-      createAnalysisProvider({ analysisProvider: "google" }),
+      createAnalysisProvider({
+        analysisProvider: "google",
+        anthropicModel: "claude-haiku-5-5",
+      }),
     ).toThrow(/T-061/);
   });
 });

@@ -5,6 +5,10 @@ const envSchema = z.object({
   STORAGE: z.enum(["local", "cloud"]).default("local"),
   STORAGE_LOCAL_DIR: z.string().min(1).default(".data/storage"),
   DATABASE_URL: z.string().min(1).optional(),
+  ANTHROPIC_API_KEY: z.string().min(1).optional(),
+  // Haiku keeps the cost per child low (docs/pricing.md); change it here when
+  // measured quality on real matches calls for a stronger model.
+  ANTHROPIC_MODEL: z.string().min(1).default("claude-haiku-5-5"),
   APP_URL: z.url().default("http://localhost:3000"),
 });
 
@@ -14,6 +18,9 @@ export type AppConfig = {
   storageLocalDir: string;
   /** Postgres connection string. Optional so tools that do not need the database still start. */
   databaseUrl?: string;
+  /** Key for the Claude provider (ANALYSIS_PROVIDER=claude). */
+  anthropicApiKey?: string;
+  anthropicModel: string;
   /** Public address of the site, used in links and QR codes (no trailing slash). */
   appUrl: string;
 };
@@ -46,6 +53,8 @@ export function loadConfig(env: Env = process.env): AppConfig {
     storage: parsed.data.STORAGE,
     storageLocalDir: parsed.data.STORAGE_LOCAL_DIR,
     databaseUrl: parsed.data.DATABASE_URL,
+    anthropicApiKey: parsed.data.ANTHROPIC_API_KEY,
+    anthropicModel: parsed.data.ANTHROPIC_MODEL,
     appUrl: parsed.data.APP_URL.replace(/\/+$/, ""),
   };
 }

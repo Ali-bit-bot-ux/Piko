@@ -8,7 +8,18 @@ describe("loadConfig", () => {
       storage: "local",
       storageLocalDir: ".data/storage",
       appUrl: "http://localhost:3000",
+      anthropicModel: "claude-haiku-5-5",
     });
+  });
+
+  it("reads the Claude key and model", () => {
+    const config = loadConfig({
+      ANTHROPIC_API_KEY: "key",
+      ANTHROPIC_MODEL: "claude-sonnet-5-5",
+    });
+    expect(config.anthropicApiKey).toBe("key");
+    expect(config.anthropicModel).toBe("claude-sonnet-5-5");
+    expect(loadConfig({}).anthropicApiKey).toBeUndefined();
   });
 
   it("reads the public address and drops trailing slashes", () => {
