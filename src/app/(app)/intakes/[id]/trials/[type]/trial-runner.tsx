@@ -268,7 +268,8 @@ export function TrialRunner({
               attempts={selected.attempts}
               lineTemplate={texts.attemptLine}
               texts={correction}
-              onCorrected={(id, value) =>
+              onCorrected={(id, value) => {
+                setMessage(null);
                 setCandidates((current) =>
                   current.map((c) => ({
                     ...c,
@@ -276,8 +277,8 @@ export function TrialRunner({
                       a.id === id ? { ...a, value } : a,
                     ),
                   })),
-                )
-              }
+                );
+              }}
             />
           )}
           {best !== null ? (

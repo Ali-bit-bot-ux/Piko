@@ -73,7 +73,7 @@ export const resultsRu = {
     disagreementNone: "Тренеры оценили похоже.",
     disagreementLine: "{criterion}: оценки от {min} до {max}",
     disagreementNote:
-      "Расхождение в {threshold} балла и больше отправляет кандидата на повторный просмотр.",
+      "Разница оценок от {threshold} и больше отправляет кандидата на повторный просмотр.",
     lowCriterionNote:
       "Критерий с оценкой 1 не позволяет присвоить статус «Зачислен».",
     coachRatings: "Оценки тренеров: {list}",

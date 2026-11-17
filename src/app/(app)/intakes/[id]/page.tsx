@@ -122,6 +122,7 @@ export default async function IntakePage(props: PageProps<"/intakes/[id]">) {
       ) : null}
 
       <CandidateList
+        intakeId={intake.id}
         action={intakePath(intake.id)}
         intakeStatus={intake.status}
         filters={filters}
