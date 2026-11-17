@@ -5,8 +5,8 @@ import {
   createOfflineQueue,
   flushQueue,
   type OfflineQueue,
-  type SendOutcome,
 } from "@/lib/offline-queue";
+import { outcomeOf } from "@/lib/send-outcome";
 import type { RecordMeasurementInput } from "@/server/trials/record-measurement";
 import { recordMeasurementAction } from "./actions";
 
@@ -26,12 +26,6 @@ export type FlushReport = {
 };
 
 const FLUSH_EVERY_MS = 20_000;
-
-/** A server fault ("generic") is worth another try; every other code is final. */
-function outcomeOf(result: ActionResult): SendOutcome {
-  if (result.ok) return "sent";
-  return result.code === "generic" ? "retry" : "drop";
-}
 
 /**
  * Saves results with a safety net for a bad connection: when sending fails,
