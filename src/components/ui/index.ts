@@ -6,6 +6,8 @@ export { Card } from "./card";
 export type { CardVariant } from "./card";
 export { ArrowRightIcon, CloseIcon, MenuIcon } from "./icons";
 export { Input } from "./input";
+export { Select } from "./select";
+export type { SelectOption } from "./select";
 export { ScoreRing } from "./score-ring";
 export type { ScoreRingSize } from "./score-ring";
 export { StepCard } from "./step-card";

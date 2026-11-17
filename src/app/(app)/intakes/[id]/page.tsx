@@ -2,13 +2,18 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { z } from "zod";
+import { CandidateList } from "@/components/features/cabinet/candidate-list";
 import { IntakeCard } from "@/components/features/cabinet/intake-card";
 import { Button, Card } from "@/components/ui";
 import { getDictionary } from "@/lib/i18n";
-import { routes } from "@/lib/routes";
+import { intakePath, routes } from "@/lib/routes";
 import { canManageIntakes } from "@/server/auth/policy";
 import { requireStaff } from "@/server/auth/session";
 import { loadConfig } from "@/server/config";
+import {
+  listCandidatesForUser,
+  parseCandidateFilters,
+} from "@/server/db/candidates";
 import { findIntakeForUser } from "@/server/db/intakes";
 import { qrSvg, registrationUrl } from "@/server/intakes/qr";
 import { publishIntakeAction } from "./actions";
@@ -27,6 +32,10 @@ export default async function IntakePage(props: PageProps<"/intakes/[id]">) {
   // Another academy's intake looks exactly like a missing one.
   const intake = await findIntakeForUser(user, id);
   if (!intake) notFound();
+
+  const filters = parseCandidateFilters(await props.searchParams);
+  const candidates = await listCandidatesForUser(user, intake.id, filters);
+  if (!candidates) notFound();
 
   const url = registrationUrl(loadConfig().appUrl, intake.id);
   const qr = intake.status === "open" ? await qrSvg(url) : null;
@@ -48,7 +57,7 @@ export default async function IntakePage(props: PageProps<"/intakes/[id]">) {
           ageProfile: intake.ageProfile,
           tryoutDate: intake.tryoutDate,
           status: intake.status,
-          candidateCount: null,
+          candidateCount: candidates.total,
         }}
         headingLevel={1}
       />
@@ -90,6 +99,14 @@ export default async function IntakePage(props: PageProps<"/intakes/[id]">) {
           </>
         ) : null}
       </Card>
+
+      <CandidateList
+        action={intakePath(intake.id)}
+        intakeStatus={intake.status}
+        filters={filters}
+        total={candidates.total}
+        items={candidates.items}
+      />
     </div>
   );
 }
