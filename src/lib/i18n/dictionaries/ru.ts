@@ -12,6 +12,29 @@ export const ru = {
     scoreAria: "{label}: {value} из {max}",
     scoreOutOf: "из {max}",
   },
+  // Marketing site navigation (labels only; paths live in src/lib/routes.ts).
+  nav: {
+    about: "О платформе",
+    academies: "Для академий",
+    parents: "Для родителей",
+    pricing: "Тарифы",
+  },
+  auth: {
+    login: "Войти",
+    start: "Начать бесплатно",
+  },
+  header: {
+    homeAria: "Piko, на главную",
+    mainNav: "Основная навигация",
+    openMenu: "Открыть меню",
+    closeMenu: "Закрыть меню",
+    skipToContent: "Перейти к содержимому",
+  },
+  footer: {
+    tagline: "Честный и понятный отбор в футбольные академии",
+    sections: "Разделы",
+    rights: "© Piko. Все права защищены.",
+  },
   // Decision statuses, see docs/scoring.md.
   status: {
     enrolled: "Зачислен",

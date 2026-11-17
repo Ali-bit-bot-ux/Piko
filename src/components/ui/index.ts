@@ -4,6 +4,7 @@ export { Button, ButtonLink, buttonStyles } from "./button";
 export type { ButtonSize, ButtonVariant } from "./button";
 export { Card } from "./card";
 export type { CardVariant } from "./card";
+export { ArrowRightIcon, CloseIcon, MenuIcon } from "./icons";
 export { Input } from "./input";
 export { ScoreRing } from "./score-ring";
 export type { ScoreRingSize } from "./score-ring";
