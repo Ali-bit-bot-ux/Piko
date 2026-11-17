@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { z } from "zod";
+import { ReportPanel } from "@/components/features/cabinet/report-panel";
 import { CriterionRating } from "@/components/features/cabinet/criterion-rating";
 import { ScoreSummary } from "@/components/features/cabinet/score-summary";
 import { Badge, Card } from "@/components/ui";
@@ -176,6 +177,12 @@ export default async function CandidateResultPage(
         candidateId={candidate.id}
         criteria={criteria}
         canScore={view.canScore}
+      />
+      <ReportPanel
+        user={user}
+        intakeId={intake.id}
+        candidateId={candidate.id}
+        parentContact={candidate.parentContact}
       />
     </div>
   );

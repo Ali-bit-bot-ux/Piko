@@ -36,3 +36,6 @@ export const mainNav = [
   { key: "parents", href: routes.parents },
   { key: "pricing", href: routes.pricing },
 ] as const;
+
+/** Public report page of one child; the token is the secret in the link. */
+export const reportPath = (token: string) => `/r/${token}`;
