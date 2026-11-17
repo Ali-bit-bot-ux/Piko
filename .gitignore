@@ -46,3 +46,6 @@ next-env.d.ts
 
 # generated Prisma client (npm run db:generate)
 /src/generated/
+
+# working copies of subagents
+/.claude/worktrees/
