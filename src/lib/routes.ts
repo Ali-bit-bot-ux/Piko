@@ -13,6 +13,10 @@ export const routes = {
   /** Cabinet home: the list of intakes. */
   dashboard: "/dashboard",
   intakeNew: "/intakes/new",
+  /** Usage and quality numbers of the academy (directors and admins). */
+  analytics: "/analytics",
+  /** How the academy pays (Kaspi) and its bills (directors and admins). */
+  billing: "/billing",
 } as const;
 
 /** Cabinet page of one intake. */

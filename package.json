@@ -18,7 +18,8 @@
     "db:validate": "prisma validate",
     "db:migrate": "prisma migrate dev",
     "db:deploy": "prisma migrate deploy",
-    "db:seed": "prisma db seed"
+    "db:seed": "prisma db seed",
+    "payment": "tsx prisma/payments.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.9.0",

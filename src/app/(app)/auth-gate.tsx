@@ -3,6 +3,7 @@ import { Logo } from "@/components/features/site/logo";
 import { Button } from "@/components/ui";
 import { getDictionary } from "@/lib/i18n";
 import { routes } from "@/lib/routes";
+import { canManageIntakes } from "@/server/auth/policy";
 import { requireStaff } from "@/server/auth/session";
 import { logoutAction } from "./actions";
 
@@ -39,6 +40,12 @@ export async function AuthGate({ children }: { children: React.ReactNode }) {
             label: cabinet.nav.intakes,
             matchPrefixes: ["/intakes"],
           },
+          ...(canManageIntakes(user)
+            ? [
+                { href: routes.analytics, label: cabinet.nav.analytics },
+                { href: routes.billing, label: cabinet.nav.billing },
+              ]
+            : []),
         ]}
       />
       <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 sm:px-6">

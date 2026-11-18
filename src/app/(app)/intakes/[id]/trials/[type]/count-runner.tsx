@@ -65,6 +65,8 @@ export function CountRunner({
           report.dropped.map((d) => d.eventId),
         ),
       );
+      // The "kept on the phone" notice is out of date once results are sent.
+      if (report.sent.length > 0) setMessage(null);
       setSentLater((count) => count + report.sent.length);
       setDroppedCount((count) => count + report.dropped.length);
     },
@@ -220,7 +222,9 @@ export function CountRunner({
         >
           {saving
             ? texts.saving
-            : interpolate(texts.save, { attempt: nextAttempt })}
+            : interpolate(texts.save, {
+                attempt: Math.min(nextAttempt, MAX_ATTEMPTS),
+              })}
         </Button>
         {selected && finished ? (
           <p className="text-sm text-ink-muted">{runnerTexts.allDone}</p>

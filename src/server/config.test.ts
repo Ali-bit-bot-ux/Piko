@@ -9,6 +9,20 @@ describe("loadConfig", () => {
       storageLocalDir: ".data/storage",
       appUrl: "http://localhost:3000",
       anthropicModel: "claude-haiku-5-5",
+      kaspi: {},
+    });
+  });
+
+  it("reads the Kaspi payment details", () => {
+    const config = loadConfig({
+      KASPI_PHONE: "+7 700 000 00 00",
+      KASPI_RECIPIENT: "ТОО Пример",
+      KASPI_QR_URL: "https://example.invalid/qr.png",
+    });
+    expect(config.kaspi).toEqual({
+      phone: "+7 700 000 00 00",
+      recipient: "ТОО Пример",
+      qrUrl: "https://example.invalid/qr.png",
     });
   });
 

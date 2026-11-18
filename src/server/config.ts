@@ -10,6 +10,10 @@ const envSchema = z.object({
   // measured quality on real matches calls for a stronger model.
   ANTHROPIC_MODEL: z.string().min(1).default("claude-haiku-5-5"),
   APP_URL: z.url().default("http://localhost:3000"),
+  // Where academies pay (Kaspi transfer or QR, T-065). All optional.
+  KASPI_PHONE: z.string().min(5).optional(),
+  KASPI_RECIPIENT: z.string().min(2).optional(),
+  KASPI_QR_URL: z.url().optional(),
 });
 
 export type AppConfig = {
@@ -23,6 +27,8 @@ export type AppConfig = {
   anthropicModel: string;
   /** Public address of the site, used in links and QR codes (no trailing slash). */
   appUrl: string;
+  /** Kaspi details shown to academies on the payment page; empty until set. */
+  kaspi: { phone?: string; recipient?: string; qrUrl?: string };
 };
 
 export class ConfigError extends Error {
@@ -56,5 +62,10 @@ export function loadConfig(env: Env = process.env): AppConfig {
     anthropicApiKey: parsed.data.ANTHROPIC_API_KEY,
     anthropicModel: parsed.data.ANTHROPIC_MODEL,
     appUrl: parsed.data.APP_URL.replace(/\/+$/, ""),
+    kaspi: {
+      phone: parsed.data.KASPI_PHONE,
+      recipient: parsed.data.KASPI_RECIPIENT,
+      qrUrl: parsed.data.KASPI_QR_URL,
+    },
   };
 }

@@ -103,10 +103,37 @@ model Organization {
   plan      Plan     @default(pilot)
   createdAt DateTime @default(now())
 
-  users   User[]
-  intakes Intake[]
+  users    User[]
+  intakes  Intake[]
+  payments Payment[]
 
   @@map("organizations")
+}
+
+enum PaymentStatus {
+  pending
+  paid
+  cancelled
+}
+
+/// A bill paid by hand through Kaspi (transfer or QR), B2B (T-065). Created and
+/// confirmed by the team (`npm run payment`), shown to the academy's director.
+model Payment {
+  id             String        @id @default(uuid()) @db.Uuid
+  organizationId String        @db.Uuid
+  /// Amount in tenge, whole numbers.
+  amountKzt      Int
+  description    String
+  /// Short code the payer writes in the transfer comment, e.g. PK-7H2K9Q.
+  reference      String        @unique
+  status         PaymentStatus @default(pending)
+  createdAt      DateTime      @default(now())
+  paidAt         DateTime?
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@map("payments")
 }
 
 model User {
