@@ -7,7 +7,7 @@ import { recordEvent } from "../events";
 
 /** Tests measured with a stopwatch. */
 export const timedTrialTypes = [
-  "sprint_20m",
+  "sprint_30m",
   "shuttle_5_10_5",
   "dribbling",
 ] as const;

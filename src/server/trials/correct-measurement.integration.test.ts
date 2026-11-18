@@ -55,7 +55,7 @@ describe.skipIf(!hasDatabase)("correcting a saved result (database)", () => {
         tryoutDate: new Date("2026-12-01"),
         status,
         trials: {
-          create: (["sprint_20m", "passing"] as const).map((type) => ({
+          create: (["sprint_30m", "passing"] as const).map((type) => ({
             type,
           })),
         },
@@ -114,7 +114,7 @@ describe.skipIf(!hasDatabase)("correcting a saved result (database)", () => {
       coach(),
       {
         intakeId,
-        trialType: "sprint_20m",
+        trialType: "sprint_30m",
         candidateId: childId,
         attempt: 1,
         value: 5.1,
@@ -138,11 +138,11 @@ describe.skipIf(!hasDatabase)("correcting a saved result (database)", () => {
       where: { candidateId: childId },
       include: { trial: true },
     });
-    timeId = rows.find((r) => r.trial.type === "sprint_20m")!.id;
+    timeId = rows.find((r) => r.trial.type === "sprint_30m")!.id;
     countId = rows.find((r) => r.trial.type === "passing")!.id;
 
     const trial = await prisma.trial.findFirstOrThrow({
-      where: { intakeId: finishedIntakeId, type: "sprint_20m" },
+      where: { intakeId: finishedIntakeId, type: "sprint_30m" },
     });
     finishedMeasurementId = (
       await prisma.measurement.create({
@@ -193,7 +193,7 @@ describe.skipIf(!hasDatabase)("correcting a saved result (database)", () => {
     expect(corrected.id).toBe(eventId);
     expect(corrected.actorId).toBe(coachId);
     expect(corrected.payload).toEqual({
-      trialType: "sprint_20m",
+      trialType: "sprint_30m",
       attempt: 1,
       previousValue: 5.1,
       value: 4.55,

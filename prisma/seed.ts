@@ -24,7 +24,7 @@ const ids = {
 const DEMO_PASSWORD = "piko-demo-2026";
 
 const trialTypes = [
-  "sprint_20m",
+  "sprint_30m",
   "shuttle_5_10_5",
   "dribbling",
   "passing",
@@ -118,7 +118,7 @@ async function main() {
     }
 
     const sprint = await prisma.trial.findUniqueOrThrow({
-      where: { intakeId_type: { intakeId: ids.intake, type: "sprint_20m" } },
+      where: { intakeId_type: { intakeId: ids.intake, type: "sprint_30m" } },
     });
     const sprintTimes = [4.12, 4.05];
     for (const [index, value] of sprintTimes.entries()) {

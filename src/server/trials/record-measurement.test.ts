@@ -6,7 +6,7 @@ import {
 
 const valid = {
   intakeId: "11111111-1111-4111-8111-111111111111",
-  trialType: "sprint_20m",
+  trialType: "sprint_30m",
   candidateId: "22222222-2222-4222-8222-222222222222",
   attempt: 1,
   value: 4.056,
@@ -62,7 +62,7 @@ describe("recordMeasurementSchema", () => {
     expect(
       recordMeasurementSchema.safeParse({
         ...valid,
-        trialType: "sprint_20m",
+        trialType: "sprint_30m",
         value: 0,
       }).success,
     ).toBe(false);

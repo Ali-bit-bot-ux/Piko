@@ -179,7 +179,7 @@ export const ru = {
     back: "К набору",
     open: "Открыть",
     types: {
-      sprint_20m: "Спринт 20 м",
+      sprint_30m: "Спринт 30 м",
       shuttle_5_10_5: "Челнок 5–10–5",
       dribbling: "Ведение мяча",
       passing: "Передачи",

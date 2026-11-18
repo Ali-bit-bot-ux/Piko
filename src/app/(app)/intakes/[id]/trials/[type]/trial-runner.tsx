@@ -60,7 +60,7 @@ export function TrialRunner({
   queueKey,
 }: {
   intakeId: string;
-  trialType: "sprint_20m" | "shuttle_5_10_5" | "dribbling";
+  trialType: "sprint_30m" | "shuttle_5_10_5" | "dribbling";
   candidates: RunnerCandidate[];
   texts: TrialRunnerTexts;
   correction: CorrectionTexts;

@@ -48,7 +48,7 @@ enum CandidateStatus {
 
 /// Objective tests (docs/scoring.md).
 enum TrialType {
-  sprint_20m
+  sprint_30m
   shuttle_5_10_5
   dribbling
   passing

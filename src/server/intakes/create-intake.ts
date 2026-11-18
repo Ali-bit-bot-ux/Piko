@@ -16,7 +16,7 @@ export const intakeErrorCodes = [
 export type IntakeErrorCode = (typeof intakeErrorCodes)[number];
 
 const TRIAL_TYPES = [
-  "sprint_20m",
+  "sprint_30m",
   "shuttle_5_10_5",
   "dribbling",
   "passing",

@@ -56,7 +56,7 @@ describe.skipIf(!hasDatabase)("offline queue to the server (database)", () => {
         ageProfile: "U10_U11",
         tryoutDate: new Date("2026-12-01"),
         status: "open",
-        trials: { create: [{ type: "sprint_20m" }] },
+        trials: { create: [{ type: "sprint_30m" }] },
       },
     });
     intakeId = intake.id;
@@ -85,7 +85,7 @@ describe.skipIf(!hasDatabase)("offline queue to the server (database)", () => {
 
   const payload = (overrides: Record<string, unknown> = {}) => ({
     intakeId,
-    trialType: "sprint_20m" as const,
+    trialType: "sprint_30m" as const,
     candidateId: childId,
     attempt: 1,
     value: 4.2,

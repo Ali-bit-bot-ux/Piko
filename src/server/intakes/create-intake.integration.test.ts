@@ -54,7 +54,7 @@ describe.skipIf(!hasDatabase)("createIntake (database)", () => {
         "passing",
         "shooting",
         "shuttle_5_10_5",
-        "sprint_20m",
+        "sprint_30m",
       ].sort(),
     );
   });

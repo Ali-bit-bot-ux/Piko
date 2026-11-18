@@ -30,7 +30,7 @@ describe.skipIf(!hasDatabase)("recording stopwatch results (database)", () => {
   });
   const input = (overrides: Record<string, unknown> = {}) => ({
     intakeId: openIntakeId,
-    trialType: "sprint_20m",
+    trialType: "sprint_30m",
     candidateId: anna,
     attempt: 1,
     value: 4.12,
@@ -49,13 +49,13 @@ describe.skipIf(!hasDatabase)("recording stopwatch results (database)", () => {
         status,
         trials: {
           create: [
-            "sprint_20m",
+            "sprint_30m",
             "shuttle_5_10_5",
             "dribbling",
             "passing",
             "shooting",
           ].map((type) => ({
-            type: type as "sprint_20m",
+            type: type as "sprint_30m",
           })),
         },
       },
@@ -146,7 +146,7 @@ describe.skipIf(!hasDatabase)("recording stopwatch results (database)", () => {
     const measured = events.find((e) => e.type === "measurement_recorded")!;
     expect(measured.id).toBe(eventId);
     expect(measured.payload).toEqual({
-      trialType: "sprint_20m",
+      trialType: "sprint_30m",
       attempt: 1,
       value: 4.06,
     });
@@ -279,7 +279,7 @@ describe.skipIf(!hasDatabase)("recording stopwatch results (database)", () => {
     const progress = await listTrialProgress(
       coach(),
       openIntakeId,
-      "sprint_20m",
+      "sprint_30m",
       prisma,
     );
     const byName = Object.fromEntries(
@@ -292,7 +292,7 @@ describe.skipIf(!hasDatabase)("recording stopwatch results (database)", () => {
     expect(byName["Борис Тестов"]).toHaveLength(1);
 
     expect(
-      await listTrialProgress(coach(), otherIntakeId, "sprint_20m", prisma),
+      await listTrialProgress(coach(), otherIntakeId, "sprint_30m", prisma),
     ).toBeNull();
     const other = await listTrialProgress(
       coach(),
