@@ -120,7 +120,7 @@ async function main() {
     const sprint = await prisma.trial.findUniqueOrThrow({
       where: { intakeId_type: { intakeId: ids.intake, type: "sprint_30m" } },
     });
-    const sprintTimes = [4.12, 4.05];
+    const sprintTimes = [5.62, 5.55];
     for (const [index, value] of sprintTimes.entries()) {
       await prisma.measurement.upsert({
         where: {

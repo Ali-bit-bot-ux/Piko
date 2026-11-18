@@ -1,0 +1,6 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    { "name": "piko-dev", "runtimeExecutable": "npm", "runtimeArgs": ["run", "dev", "--", "-p", "3112"], "port": 3112 }
+  ]
+}
