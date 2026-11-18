@@ -122,6 +122,16 @@ export default async function CandidateResultPage(
                         .join(", "),
                     })}
                   </p>
+                  {trial.norm ? (
+                    <p className="text-sm font-medium text-ink">
+                      {interpolate(
+                        trial.norm.approximate
+                          ? t.trialNormApproximate
+                          : t.trialNorm,
+                        { score: trial.norm.score },
+                      )}
+                    </p>
+                  ) : null}
                 </li>
               );
             })}

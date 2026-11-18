@@ -309,6 +309,34 @@ describe.skipIf(!hasDatabase)("coach evaluations (database)", () => {
     expect(finished!.canScore).toBe(false);
   });
 
+  it("shows the age-norm hint next to a result (age 11 on the tryout day)", async () => {
+    const sprint = await prisma.trial.create({
+      data: { intakeId, type: "sprint_30m" },
+    });
+    const shooting = await prisma.trial.create({
+      data: { intakeId, type: "shooting" },
+    });
+    await prisma.measurement.createMany({
+      data: [
+        { candidateId: child2Id, trialId: sprint.id, attempt: 1, value: 5.7 },
+        { candidateId: child2Id, trialId: sprint.id, attempt: 2, value: 5.5 },
+        { candidateId: child2Id, trialId: shooting.id, attempt: 1, value: 5 },
+      ],
+    });
+    const view = await getCandidateResultForUser(
+      user(coachA),
+      intakeId,
+      child2Id,
+      prisma,
+    );
+    const byType = Object.fromEntries(view!.trials.map((t) => [t.type, t]));
+    // Best of two, 5.5 s at age 11 is a 4, from the documented table.
+    expect(byType.sprint_30m.best).toBe(5.5);
+    expect(byType.sprint_30m.norm).toEqual({ score: 4, approximate: false });
+    // 5 hits of 10 at age 11 is a 4 from the approximate table.
+    expect(byType.shooting.norm).toEqual({ score: 4, approximate: true });
+  });
+
   it("rejects a key outside the profile and ratings outside 1..5", async () => {
     for (const overrides of [
       { criterionKey: "tactics" },

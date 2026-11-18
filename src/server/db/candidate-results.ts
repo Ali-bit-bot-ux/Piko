@@ -2,7 +2,10 @@ import type { PrismaClient } from "@/generated/prisma/client";
 import { isStaff, type SessionUser } from "../auth/policy";
 import { groupRatings } from "../evaluations/score-criterion";
 import {
+  ageOnDate,
   bestAttempt,
+  normalizeTrialResult,
+  trialNorms,
   calculateScore,
   profiles,
   type ScoreResult,
@@ -58,14 +61,26 @@ export async function getCandidateResultForUser(
       const attempts = candidate.measurements
         .filter((m) => m.trial.type === type)
         .map((m) => ({ attempt: m.attempt, value: m.value }));
+      const best = bestAttempt(
+        type,
+        attempts.map((a) => a.value),
+      );
+      const age = ageOnDate(candidate.birthDate, intake.tryoutDate);
+      const normScore =
+        best === null ? null : normalizeTrialResult(type, age, best);
       return {
         type,
         timed: isTimedTrial(type),
         attempts,
-        best: bestAttempt(
-          type,
-          attempts.map((a) => a.value),
-        ),
+        best,
+        // A hint next to the result; the coach's rating is what counts.
+        norm:
+          normScore === null
+            ? null
+            : {
+                score: normScore,
+                approximate: trialNorms[type]?.[age]?.basis === "estimate",
+              },
       };
     })
     .filter((trial) => trial.attempts.length > 0);

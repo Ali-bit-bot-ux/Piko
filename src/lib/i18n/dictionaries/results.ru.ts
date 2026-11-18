@@ -54,6 +54,9 @@ export const resultsRu = {
     trialSeconds: "{value} с",
     trialCount: "{value} из 10",
     trialAttempts: "Попытки: {list}",
+    trialNorm: "По возрастному нормативу: {score} из 5",
+    trialNormApproximate:
+      "По возрастному нормативу: {score} из 5 (приблизительно)",
     evaluationTitle: "Оценка тренера",
     evaluationHint:
       "Оцените кандидата по каждому критерию от 1 до 5. Оценку можно изменить, пока набор открыт.",

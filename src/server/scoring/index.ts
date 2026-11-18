@@ -29,3 +29,4 @@ export {
   type AgeProfileKey,
   type Criterion,
 } from "./profiles";
+export { ageOnDate } from "./age";
