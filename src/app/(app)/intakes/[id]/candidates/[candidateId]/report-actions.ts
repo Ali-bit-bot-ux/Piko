@@ -9,6 +9,7 @@ import {
   markReportSent,
   type SendChannel,
 } from "@/server/reports";
+import { logFailure } from "@/server/log";
 
 export type CreateLinkResult =
   | { ok: true; url: string }
@@ -39,7 +40,7 @@ export async function createReportLinkAction(
       url: `${loadConfig().appUrl}${reportPath(result.token)}`,
     };
   } catch (error) {
-    console.error("creating a report link failed", error);
+    logFailure("creating a report link failed", error);
     return { ok: false, code: "generic" };
   }
 }
@@ -61,7 +62,7 @@ export async function markReportSentAction(
     revalidatePath(candidatePath(intakeId, candidateId));
     return { ok: true };
   } catch (error) {
-    console.error("marking a report as sent failed", error);
+    logFailure("marking a report as sent failed", error);
     return { ok: false, code: "generic" };
   }
 }

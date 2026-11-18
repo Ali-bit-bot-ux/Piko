@@ -20,10 +20,18 @@ describe("formatStopwatch", () => {
 });
 
 describe("toSeconds", () => {
-  it("rounds to hundredths of a second", () => {
+  it("cuts to hundredths of a second, like the display", () => {
     expect(toSeconds(4052)).toBe(4.05);
-    expect(toSeconds(4056)).toBe(4.06);
+    expect(toSeconds(4059)).toBe(4.05);
     expect(toSeconds(0)).toBe(0);
+  });
+
+  it("saves exactly what the stopped clock shows", () => {
+    for (const ms of [5006, 5009, 4999, 12_345, 65_990, 3]) {
+      const shown = formatStopwatch(ms);
+      const [minutes, rest] = shown.split(":");
+      expect(toSeconds(ms)).toBe(Number(minutes) * 60 + Number(rest));
+    }
   });
 
   it("never returns a negative time", () => {

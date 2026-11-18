@@ -9,7 +9,10 @@ export function formatStopwatch(milliseconds: number): string {
   return `${pad(minutes)}:${pad(seconds)}.${pad(hundredths)}`;
 }
 
-/** Seconds rounded to hundredths, the precision a hand stopwatch gives. */
+/**
+ * Seconds cut to hundredths, exactly what formatStopwatch shows, so the saved
+ * time is the one the coach saw on the stopped clock (a hand stopwatch cuts too).
+ */
 export function toSeconds(milliseconds: number): number {
-  return Math.round(Math.max(0, milliseconds) / 10) / 100;
+  return Math.floor(Math.max(0, milliseconds) / 10) / 100;
 }

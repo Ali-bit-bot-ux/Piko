@@ -5,6 +5,7 @@ import {
   createOfflineQueue,
   flushQueue,
   type OfflineQueue,
+  type QueuedItem,
 } from "@/lib/offline-queue";
 import { outcomeOf } from "@/lib/send-outcome";
 import type { RecordMeasurementInput } from "@/server/trials/record-measurement";
@@ -17,6 +18,8 @@ export type SubmitResult =
   | { status: "sent"; measurementId: string }
   /** No connection (or a server fault): kept on the phone, sent later. */
   | { status: "queued" }
+  /** No connection and the phone could not keep it either. */
+  | { status: "not_saved" }
   /** The server will not take it as it is. */
   | { status: "failed"; code: Exclude<FailureCode, "generic"> };
 
@@ -35,21 +38,26 @@ const FLUSH_EVERY_MS = 20_000;
 export function useOfflineSave({
   queueKey,
   onFlushed,
+  onRestored,
 }: {
   /** Separate per signed-in user and intake, so results never cross over. */
   queueKey: string;
   onFlushed: (report: FlushReport) => void;
+  /** Called once on load with the results still waiting from before a reload. */
+  onRestored?: (items: QueuedItem<RecordMeasurementInput>[]) => void;
 }) {
   const queueRef = useRef<OfflineQueue<RecordMeasurementInput> | null>(null);
   const flushing = useRef(false);
   const onFlushedRef = useRef(onFlushed);
+  const onRestoredRef = useRef(onRestored);
   const [pending, setPending] = useState(0);
   const [sending, setSending] = useState(false);
   const [online, setOnline] = useState(true);
 
   useEffect(() => {
     onFlushedRef.current = onFlushed;
-  }, [onFlushed]);
+    onRestoredRef.current = onRestored;
+  }, [onFlushed, onRestored]);
 
   const flush = useCallback(async () => {
     const queue = queueRef.current;
@@ -58,7 +66,7 @@ export function useOfflineSave({
     setSending(true);
 
     const report: FlushReport = { sent: [], dropped: [] };
-    await flushQueue(queue, async (item) => {
+    const flushed = await flushQueue(queue, async (item) => {
       const result = await recordMeasurementAction(item.payload);
       if (result.ok) {
         report.sent.push({
@@ -70,6 +78,13 @@ export function useOfflineSave({
       }
       return outcomeOf(result);
     });
+
+    // Items given up after repeated server faults: tell the coach as well.
+    for (const eventId of flushed.dropped) {
+      if (!report.dropped.some((d) => d.eventId === eventId)) {
+        report.dropped.push({ eventId, code: "generic" });
+      }
+    }
 
     flushing.current = false;
     setSending(false);
@@ -86,6 +101,8 @@ export function useOfflineSave({
       queueKey,
     );
     setPending(queueRef.current.size());
+    const waiting = queueRef.current.list();
+    if (waiting.length > 0) onRestoredRef.current?.(waiting);
     setOnline(navigator.onLine);
     void flush();
 
@@ -107,13 +124,13 @@ export function useOfflineSave({
   const submit = useCallback(
     async (input: RecordMeasurementInput): Promise<SubmitResult> => {
       const keep = (): SubmitResult => {
-        queueRef.current?.add({
+        const stored = queueRef.current?.add({
           id: input.clientEventId,
           payload: input,
           queuedAt: Date.now(),
         });
         setPending(queueRef.current?.size() ?? 0);
-        return { status: "queued" };
+        return stored ? { status: "queued" } : { status: "not_saved" };
       };
 
       if (!navigator.onLine) return keep();

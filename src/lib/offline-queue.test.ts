@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import {
   createOfflineQueue,
   flushQueue,
+  MAX_SERVER_FAULTS,
   type QueueStorage,
   type QueuedItem,
 } from "./offline-queue";
@@ -83,6 +84,33 @@ describe("createOfflineQueue", () => {
     );
     expect(() => queue.add(item("a"))).not.toThrow();
   });
+
+  it("says so when the item could not be stored", () => {
+    const full = createOfflineQueue(
+      {
+        getItem: () => null,
+        setItem: () => {
+          throw new Error("quota");
+        },
+      },
+      "k",
+    );
+    expect(full.add(item("a"))).toBe(false);
+    const fine = createOfflineQueue(memoryStorage(), "k");
+    expect(fine.add(item("a"))).toBe(true);
+    // The same id again is already kept: still a success.
+    expect(fine.add(item("a"))).toBe(true);
+  });
+
+  it("counts server faults per item", () => {
+    const queue = createOfflineQueue(memoryStorage(), "k");
+    queue.add(item("a"));
+    queue.add(item("b"));
+    expect(queue.recordFault("a")).toBe(1);
+    expect(queue.recordFault("a")).toBe(2);
+    expect(queue.recordFault("b")).toBe(1);
+    expect(queue.recordFault("missing")).toBe(0);
+  });
 });
 
 describe("flushQueue", () => {
@@ -107,15 +135,28 @@ describe("flushQueue", () => {
     });
   });
 
-  it("stops at the first retry and keeps the rest in order", async () => {
+  it("a server fault keeps the item and goes on to the next ones", async () => {
     const queue = filled();
     const send = vi.fn(async (i: QueuedItem<unknown>) =>
       i.id === "b" ? ("retry" as const) : ("sent" as const),
     );
     const result = await flushQueue(queue, send);
-    expect(send).toHaveBeenCalledTimes(2);
-    expect(result).toEqual({ sent: ["a"], dropped: [], remaining: 2 });
-    expect(queue.list().map((i) => i.id)).toEqual(["b", "c"]);
+    expect(send).toHaveBeenCalledTimes(3);
+    expect(result).toEqual({ sent: ["a", "c"], dropped: [], remaining: 1 });
+    expect(queue.list().map((i) => i.id)).toEqual(["b"]);
+  });
+
+  it("gives an item up after repeated server faults so it cannot block", async () => {
+    const queue = filled();
+    const send = async (i: QueuedItem<unknown>) =>
+      i.id === "a" ? ("retry" as const) : ("sent" as const);
+    let last = await flushQueue(queue, send);
+    for (let round = 1; round < MAX_SERVER_FAULTS; round += 1) {
+      expect(last.remaining).toBe(1);
+      last = await flushQueue(queue, send);
+    }
+    expect(last.dropped).toEqual(["a"]);
+    expect(last.remaining).toBe(0);
   });
 
   it("removes an item the server will never accept and goes on", async () => {
@@ -132,6 +173,17 @@ describe("flushQueue", () => {
       throw new TypeError("fetch failed");
     });
     expect(result).toEqual({ sent: [], dropped: [], remaining: 3 });
+  });
+
+  it("stops at the first lost connection and keeps the order", async () => {
+    const queue = filled();
+    const send = vi.fn(async (i: QueuedItem<unknown>) => {
+      if (i.id === "b") throw new TypeError("fetch failed");
+      return "sent" as const;
+    });
+    const result = await flushQueue(queue, send);
+    expect(send).toHaveBeenCalledTimes(2);
+    expect(result).toEqual({ sent: ["a"], dropped: [], remaining: 2 });
   });
 
   it("does nothing for an empty queue", async () => {

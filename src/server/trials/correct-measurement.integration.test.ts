@@ -40,7 +40,7 @@ describe.skipIf(!hasDatabase)("correcting a saved result (database)", () => {
     intakeId,
     measurementId: timeId,
     value: 4.5,
-    reason: "Секундомер нажали поздно",
+    reason: "late_stop",
     clientEventId: crypto.randomUUID(),
     ...overrides,
   });
@@ -197,7 +197,7 @@ describe.skipIf(!hasDatabase)("correcting a saved result (database)", () => {
       attempt: 1,
       previousValue: 5.1,
       value: 4.55,
-      reason: "Секундомер нажали поздно",
+      reason: "late_stop",
     });
     expect(JSON.stringify(events)).not.toContain("Вера");
     // The first save is still in the journal.
@@ -225,8 +225,14 @@ describe.skipIf(!hasDatabase)("correcting a saved result (database)", () => {
     ).toHaveLength(2);
   });
 
-  it("requires a reason", async () => {
-    for (const reason of ["", "  ", "ab", undefined, "я".repeat(301)]) {
+  it("requires a reason from the fixed list, never free text", async () => {
+    for (const reason of [
+      "",
+      "  ",
+      "Иван нажал поздно",
+      undefined,
+      "я".repeat(301),
+    ]) {
       expect(
         await correctMeasurement(coach(), input({ reason }), prisma),
       ).toEqual({

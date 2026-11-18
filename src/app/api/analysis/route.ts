@@ -9,6 +9,8 @@ import {
 } from "@/server/analysis/parse-form";
 import { isStaff } from "@/server/auth/policy";
 import { getCurrentUser } from "@/server/auth/session";
+import { logFailure } from "@/server/log";
+import { createRateLimiter } from "@/server/rate-limit";
 
 const STATUS: Record<AnalyzeCandidateError, number> = {
   invalid: 400,
@@ -20,12 +22,23 @@ const STATUS: Record<AnalyzeCandidateError, number> = {
   failed: 502,
 };
 
-const fail = (code: AnalyzeCandidateError | "unauthorized" | "generic") =>
+/** Each request may call a paid model: cap them per signed-in user. */
+const limiter = createRateLimiter({ max: 20, windowMs: 10 * 60 * 1000 });
+
+const fail = (
+  code: AnalyzeCandidateError | "unauthorized" | "generic" | "rate_limited",
+) =>
   NextResponse.json(
     { ok: false, code },
     {
       status:
-        code === "unauthorized" ? 401 : code === "generic" ? 500 : STATUS[code],
+        code === "unauthorized"
+          ? 401
+          : code === "generic"
+            ? 500
+            : code === "rate_limited"
+              ? 429
+              : STATUS[code],
     },
   );
 
@@ -40,11 +53,14 @@ export async function POST(request: Request) {
     return fail("unauthorized");
   }
 
-  // Cheap check first: do not read an oversized body at all.
-  const declared = Number(request.headers.get("content-length"));
-  if (Number.isFinite(declared) && declared > MAX_REQUEST_BYTES) {
-    return fail("too_large");
-  }
+  if (!limiter.allow(user.id)) return fail("rate_limited");
+
+  // Cheap check first: do not read an oversized body at all. A request that
+  // does not say its size (chunked) is refused, so it cannot fill the memory.
+  const header = request.headers.get("content-length");
+  const declared = header === null ? Number.NaN : Number(header);
+  if (!Number.isFinite(declared) || declared <= 0) return fail("invalid");
+  if (declared > MAX_REQUEST_BYTES) return fail("too_large");
 
   try {
     const form = await request.formData().catch(() => null);
@@ -64,10 +80,7 @@ export async function POST(request: Request) {
     });
   } catch (error) {
     // No request content in the log: it holds pictures of children.
-    console.error(
-      "analysis request failed:",
-      error instanceof Error ? error.name : "unknown",
-    );
+    logFailure("analysis request failed:", error);
     return fail("generic");
   }
 }

@@ -6,6 +6,7 @@ import {
   type RegistrationErrorCode,
   type RegistrationField,
 } from "@/server/intakes/register-candidate";
+import { logFailure } from "@/server/log";
 
 export type JoinFormState = {
   status: "idle" | "success" | "error";
@@ -40,7 +41,7 @@ export async function registerAction(
     if (result.ok) return { status: "success" };
     return { status: "error", errors: result.errors, code: result.code };
   } catch (error) {
-    console.error("registration failed", error);
+    logFailure("registration failed", error);
     return { status: "error", code: "generic" };
   }
 }

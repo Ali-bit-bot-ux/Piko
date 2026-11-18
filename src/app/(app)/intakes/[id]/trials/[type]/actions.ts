@@ -11,6 +11,7 @@ import {
   type RecordMeasurementInput,
   type RecordMeasurementResult,
 } from "@/server/trials/record-measurement";
+import { logFailure } from "@/server/log";
 
 /** Saves one result. Re-checks the session: actions can be called directly. */
 export async function recordMeasurementAction(
@@ -20,7 +21,7 @@ export async function recordMeasurementAction(
   try {
     return await recordMeasurement(user, input);
   } catch (error) {
-    console.error("recording a measurement failed", error);
+    logFailure("recording a measurement failed", error);
     return { ok: false, code: "generic" };
   }
 }
@@ -33,7 +34,7 @@ export async function correctMeasurementAction(
   try {
     return await correctMeasurement(user, input);
   } catch (error) {
-    console.error("correcting a measurement failed", error);
+    logFailure("correcting a measurement failed", error);
     return { ok: false, code: "generic" };
   }
 }

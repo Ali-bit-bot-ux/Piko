@@ -3,6 +3,7 @@ import {
   addAttempt,
   dropPending,
   markSent,
+  restorePending,
   type Attempt,
 } from "./trial-attempts";
 
@@ -91,5 +92,59 @@ describe("dropPending", () => {
 
   it("returns the same data when nothing is dropped", () => {
     expect(dropPending(owners(), [])).toEqual(owners());
+  });
+});
+
+describe("restorePending", () => {
+  const owner = (candidateId: string, attempts: Attempt[] = []) => ({
+    candidateId,
+    attempts,
+  });
+  const queued = (
+    id: string,
+    trialType: string,
+    candidateId: string,
+    attempt: number,
+    value: number,
+  ) => ({ id, payload: { trialType, candidateId, attempt, value } });
+
+  it("shows results waiting on the phone again after a reload", () => {
+    const result = restorePending(
+      [owner("c1"), owner("c2")],
+      [queued("e1", "sprint_30m", "c1", 1, 5.6)],
+      "sprint_30m",
+    );
+    expect(result[0].attempts).toEqual([
+      {
+        id: "pending-e1",
+        attempt: 1,
+        value: 5.6,
+        pending: true,
+        eventId: "e1",
+      },
+    ]);
+    expect(result[1].attempts).toEqual([]);
+  });
+
+  it("ignores other tests and attempt numbers the server already has", () => {
+    const saved: Attempt = { id: "m1", attempt: 1, value: 5.5 };
+    const result = restorePending(
+      [owner("c1", [saved])],
+      [
+        queued("e1", "sprint_30m", "c1", 1, 5.6),
+        queued("e2", "passing", "c1", 2, 7),
+      ],
+      "sprint_30m",
+    );
+    expect(result[0].attempts).toEqual([saved]);
+  });
+
+  it("skips children that are not in this list", () => {
+    const result = restorePending(
+      [owner("c1")],
+      [queued("e1", "sprint_30m", "ghost", 1, 5)],
+      "sprint_30m",
+    );
+    expect(result[0].attempts).toEqual([]);
   });
 });

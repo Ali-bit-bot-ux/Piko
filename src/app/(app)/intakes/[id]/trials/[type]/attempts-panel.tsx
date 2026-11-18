@@ -1,7 +1,11 @@
 "use client";
 
 import { useRef, useState, useTransition } from "react";
-import { Button, Input } from "@/components/ui";
+import { Button, Input, Select } from "@/components/ui";
+import {
+  correctionReasons,
+  type CorrectionReason,
+} from "@/lib/correction-reasons";
 import { interpolate } from "@/lib/i18n";
 import type { Attempt } from "@/lib/trial-attempts";
 import { correctMeasurementAction } from "./actions";
@@ -14,7 +18,7 @@ export type CorrectionTexts = {
   titleLine: string;
   newValue: string;
   reason: string;
-  reasonHint: string;
+  reasons: Record<CorrectionReason, string>;
   submit: string;
   saving: string;
   cancel: string;
@@ -59,7 +63,7 @@ export function AttemptsPanel({
 }: Props) {
   const [editing, setEditing] = useState<string | null>(null);
   const [value, setValue] = useState("");
-  const [reason, setReason] = useState("");
+  const [reason, setReason] = useState<CorrectionReason>("late_start");
   const [message, setMessage] = useState<{
     kind: "ok" | "error";
     text: string;
@@ -72,7 +76,7 @@ export function AttemptsPanel({
     eventId.current = crypto.randomUUID();
     setEditing(attempt.id);
     setValue(format(kind, attempt.value));
-    setReason("");
+    setReason("late_start");
     setMessage(null);
   }
 
@@ -152,15 +156,16 @@ export function AttemptsPanel({
                   value={value}
                   onChange={(event) => setValue(event.target.value)}
                 />
-                <Input
+                <Select
                   label={texts.reason}
-                  hint={texts.reasonHint}
-                  required
-                  minLength={3}
-                  maxLength={300}
-                  autoComplete="off"
                   value={reason}
-                  onChange={(event) => setReason(event.target.value)}
+                  onChange={(event) =>
+                    setReason(event.target.value as CorrectionReason)
+                  }
+                  options={correctionReasons.map((value) => ({
+                    value,
+                    label: texts.reasons[value],
+                  }))}
                 />
                 <div className="flex flex-wrap gap-2">
                   <Button type="submit" disabled={saving}>

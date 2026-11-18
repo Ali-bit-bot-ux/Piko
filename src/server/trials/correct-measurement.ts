@@ -4,18 +4,15 @@ import { isStaff, type SessionUser } from "../auth/policy";
 import { getPrisma } from "../db/client";
 import { findIntakeForUser } from "../db/intakes";
 import { recordEvent } from "../events";
+import { correctionReasons } from "@/lib/correction-reasons";
 import { valueSchemaFor, trialTypes } from "./record-measurement";
-
-export const MIN_REASON_LENGTH = 3;
-export const MAX_REASON_LENGTH = 300;
 
 export const correctMeasurementSchema = z.object({
   intakeId: z.uuid(),
   measurementId: z.uuid(),
   /** Checked against the rules of the test once the measurement is loaded. */
   value: z.number().finite(),
-  /** Required. The journal keeps it, so it must not contain personal data. */
-  reason: z.string().trim().min(MIN_REASON_LENGTH).max(MAX_REASON_LENGTH),
+  reason: z.enum(correctionReasons),
   /** Chosen by the sender; a retry with the same id changes nothing. */
   clientEventId: z.uuid(),
   occurredAtDevice: z.coerce.date().optional(),

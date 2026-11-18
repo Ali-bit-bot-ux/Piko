@@ -10,8 +10,10 @@ export const REVIEW_MIN = 3;
 
 /**
  * "Strong disagreement between coaches": the gap between the highest and the
- * lowest rating of one criterion. TEMPORARY value, see Q-7 in TASKS.md: the
- * owner has not fixed it yet. Change it here only.
+ * lowest rating of one criterion, from two coaches or more. The value 2 is
+ * fixed (Q-7, D-040): a one-point gap is normal noise on a 1-5 scale, two
+ * points or more means the coaches see a different level. The child then
+ * goes to "review" however high the total is. Change it here only.
  */
 export const DISAGREEMENT_THRESHOLD = 2;
 

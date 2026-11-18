@@ -8,6 +8,7 @@ import {
   type ScoreCriterionInput,
   type ScoreCriterionResult,
 } from "@/server/evaluations/score-criterion";
+import { logFailure } from "@/server/log";
 
 export type RatingInput = Omit<ScoreCriterionInput, "intakeId" | "candidateId">;
 
@@ -33,7 +34,7 @@ export async function scoreCriterionAction(
     }
     return result;
   } catch (error) {
-    console.error("saving an evaluation failed", error);
+    logFailure("saving an evaluation failed", error);
     return { ok: false, code: "generic" };
   }
 }

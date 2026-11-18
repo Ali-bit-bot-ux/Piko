@@ -3,6 +3,7 @@ import type { PrismaClient } from "@/generated/prisma/client";
 import type { Decision } from "@/generated/prisma/enums";
 import { getPrisma } from "../db/client";
 import { recordEvent } from "../events";
+import { logFailure } from "../log";
 import { profiles } from "../scoring";
 import { pickHighlights } from "./phrases";
 import { hashReportToken, isReportExpired, isReportTokenShape } from "./token";
@@ -69,25 +70,32 @@ export async function openReport(
   if (!candidate.score || !breakdown.success) return { ok: false };
 
   // First open only; the condition makes two simultaneous opens write once.
-  const marked = await prisma.report.updateMany({
-    where: { id: row.id, openedAt: null },
-    data: { openedAt: now },
-  });
-  if (marked.count === 1) {
-    await recordEvent(
-      {
-        id: crypto.randomUUID(),
-        type: "report_opened",
-        actorRole: "parent",
-        organizationId: candidate.intake.organizationId,
-        intakeId: candidate.intake.id,
-        participantId: candidate.id,
-        source: "web",
-        occurredAtDevice: now,
-        payload: { reportId: row.id },
-      },
-      prisma,
-    );
+  // The mark and its journal event are one transaction; if the journal fails
+  // the parent still sees the report and the next open tries again.
+  try {
+    await prisma.$transaction(async (tx) => {
+      const marked = await tx.report.updateMany({
+        where: { id: row.id, openedAt: null },
+        data: { openedAt: now },
+      });
+      if (marked.count !== 1) return;
+      await recordEvent(
+        {
+          id: crypto.randomUUID(),
+          type: "report_opened",
+          actorRole: "parent",
+          organizationId: candidate.intake.organizationId,
+          intakeId: candidate.intake.id,
+          participantId: candidate.id,
+          source: "web",
+          occurredAtDevice: now,
+          payload: { reportId: row.id },
+        },
+        tx,
+      );
+    });
+  } catch (error) {
+    logFailure("marking a report as opened failed", error);
   }
 
   const byKey = new Map(breakdown.data.criteria.map((c) => [c.key, c.score]));

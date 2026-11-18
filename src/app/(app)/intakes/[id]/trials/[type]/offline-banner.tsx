@@ -6,6 +6,7 @@ import { interpolate } from "@/lib/i18n";
 export type OfflineTexts = {
   offline: string;
   queued: string;
+  notSaved: string;
   pending: string;
   sendNow: string;
   sending: string;

@@ -56,3 +56,38 @@ export function dropPending<T extends AttemptsOwner>(
     ),
   }));
 }
+
+/** A queued result as far as this screen cares: which test, child, attempt and value. */
+export type QueuedResult = {
+  id: string;
+  payload: {
+    trialType: string;
+    candidateId: string;
+    attempt: number;
+    value: number;
+  };
+};
+
+/**
+ * Puts results that were saved on the phone before a reload back on screen as
+ * pending attempts of this test, so their attempt numbers are not used again.
+ */
+export function restorePending<T extends AttemptsOwner>(
+  owners: readonly T[],
+  queued: readonly QueuedResult[],
+  trialType: string,
+): T[] {
+  return queued
+    .filter((item) => item.payload.trialType === trialType)
+    .reduce(
+      (current, item) =>
+        addAttempt(current, item.payload.candidateId, {
+          id: `pending-${item.id}`,
+          attempt: item.payload.attempt,
+          value: item.payload.value,
+          pending: true,
+          eventId: item.id,
+        }),
+      [...owners],
+    );
+}

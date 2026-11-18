@@ -211,8 +211,29 @@ export async function recordMeasurement(
       } as const;
     });
   } catch (error) {
-    // Two people saved the same attempt at the same moment.
-    if (isUniqueViolation(error)) return { ok: false, code: "attempt_taken" };
-    throw error;
+    if (!isUniqueViolation(error)) throw error;
+    // Two sends at the same moment. If the other one was this very save (same
+    // event id, e.g. a double tap or two tabs flushing), it is a duplicate and
+    // not a refusal; otherwise someone else took the attempt.
+    const [sameEvent, saved] = await Promise.all([
+      prisma.event.findUnique({
+        where: { id: data.clientEventId },
+        select: { id: true },
+      }),
+      prisma.measurement.findUnique({
+        where: {
+          candidateId_trialId_attempt: {
+            candidateId: candidate.id,
+            trialId: trial.id,
+            attempt: data.attempt,
+          },
+        },
+        select: { id: true },
+      }),
+    ]);
+    if (sameEvent && saved) {
+      return { ok: true, duplicate: true, measurementId: saved.id };
+    }
+    return { ok: false, code: "attempt_taken" };
   }
 }

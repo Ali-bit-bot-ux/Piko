@@ -4,7 +4,12 @@ import { useEffect, useRef, useState, useTransition } from "react";
 import { Button, Card, Select } from "@/components/ui";
 import { interpolate } from "@/lib/i18n";
 import { formatStopwatch, toSeconds } from "@/lib/stopwatch";
-import { addAttempt, dropPending, markSent } from "@/lib/trial-attempts";
+import {
+  addAttempt,
+  dropPending,
+  markSent,
+  restorePending,
+} from "@/lib/trial-attempts";
 import {
   AttemptsPanel,
   type CorrectionTexts,
@@ -72,6 +77,8 @@ export function TrialRunner({
   const [droppedCount, setDroppedCount] = useState(0);
   const offline = useOfflineSave({
     queueKey,
+    onRestored: (items) =>
+      setCandidates((current) => restorePending(current, items, trialType)),
     onFlushed: (report) => {
       setCandidates((current) =>
         dropPending(
@@ -149,6 +156,10 @@ export function TrialRunner({
       });
       if (result.status === "failed") {
         setMessage({ kind: "error", text: texts.errors[result.code] });
+        return;
+      }
+      if (result.status === "not_saved") {
+        setMessage({ kind: "error", text: texts.offline.notSaved });
         return;
       }
       // Sent now, or kept on the phone: either way the coach can go on.

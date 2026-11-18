@@ -1,3 +1,4 @@
+import { z } from "zod";
 import type { PrismaClient } from "@/generated/prisma/client";
 import {
   canAccessOrganization,
@@ -15,6 +16,8 @@ export async function findIntakeForUser(
   intakeId: string,
   prisma: PrismaClient = getPrisma(),
 ) {
+  // A malformed id is "not found", not a database error.
+  if (!z.uuid().safeParse(intakeId).success) return null;
   const intake = await prisma.intake.findUnique({ where: { id: intakeId } });
   if (!intake || !canAccessOrganization(user, intake.organizationId)) {
     return null;

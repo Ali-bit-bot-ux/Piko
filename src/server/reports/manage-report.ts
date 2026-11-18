@@ -102,26 +102,31 @@ export async function markReportSent(
   });
   if (!report) return { ok: false, code: "not_found" };
 
-  const marked = await prisma.report.updateMany({
-    where: { id: report.id, sentAt: null },
-    data: { sentAt: now },
-  });
-  if (marked.count === 0) return { ok: true, alreadySent: true };
+  // One transaction: the mark and its journal event stand or fall together.
+  const alreadySent = await prisma.$transaction(async (tx) => {
+    const marked = await tx.report.updateMany({
+      where: { id: report.id, sentAt: null },
+      data: { sentAt: now },
+    });
+    if (marked.count === 0) return true;
 
-  await recordEvent(
-    {
-      id: crypto.randomUUID(),
-      type: "report_sent",
-      organizationId: intake.organizationId,
-      intakeId: intake.id,
-      participantId: candidateId,
-      actorId: user.id,
-      actorRole: user.role,
-      source: "web",
-      occurredAtDevice: now,
-      payload: { reportId: report.id, channel },
-    },
-    prisma,
-  );
+    await recordEvent(
+      {
+        id: crypto.randomUUID(),
+        type: "report_sent",
+        organizationId: intake.organizationId,
+        intakeId: intake.id,
+        participantId: candidateId,
+        actorId: user.id,
+        actorRole: user.role,
+        source: "web",
+        occurredAtDevice: now,
+        payload: { reportId: report.id, channel },
+      },
+      tx,
+    );
+    return false;
+  });
+  if (alreadySent) return { ok: true, alreadySent: true };
   return { ok: true, alreadySent: false };
 }

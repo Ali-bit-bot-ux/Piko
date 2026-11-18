@@ -10,7 +10,12 @@ export type QueuedItem<T> = {
   id: string;
   payload: T;
   queuedAt: number;
+  /** How many times the server answered with a fault (not a lost connection). */
+  failures?: number;
 };
+
+/** After this many server faults an item is given up, so it cannot block the rest. */
+export const MAX_SERVER_FAULTS = 5;
 
 /** The slice of `Storage` the queue needs (localStorage in the browser). */
 export type QueueStorage = Pick<Storage, "getItem" | "setItem">;
@@ -18,9 +23,14 @@ export type QueueStorage = Pick<Storage, "getItem" | "setItem">;
 export type OfflineQueue<T> = {
   list(): QueuedItem<T>[];
   size(): number;
-  /** Adds an item; an item with the same id is not added twice. */
-  add(item: QueuedItem<T>): void;
+  /**
+   * Adds an item; an item with the same id is not added twice. False when it
+   * could not be stored (storage full or blocked): the caller must tell the user.
+   */
+  add(item: QueuedItem<T>): boolean;
   remove(id: string): void;
+  /** Counts one server fault for the item and returns the new count. */
+  recordFault(id: string): number;
 };
 
 function isItem(value: unknown): value is QueuedItem<unknown> {
@@ -50,11 +60,13 @@ export function createOfflineQueue<T>(
       return [];
     }
   };
-  const write = (items: QueuedItem<T>[]) => {
+  const write = (items: QueuedItem<T>[]): boolean => {
     try {
       storage.setItem(key, JSON.stringify(items));
+      return true;
     } catch {
-      // Storage full or blocked: nothing more can be done here.
+      // Storage full or blocked: the caller decides what to tell the user.
+      return false;
     }
   };
 
@@ -63,11 +75,22 @@ export function createOfflineQueue<T>(
     size: () => read().length,
     add(item) {
       const items = read();
-      if (items.some((existing) => existing.id === item.id)) return;
-      write([...items, item]);
+      if (items.some((existing) => existing.id === item.id)) return true;
+      return write([...items, item]);
     },
     remove(id) {
       write(read().filter((item) => item.id !== id));
+    },
+    recordFault(id) {
+      let count = 0;
+      write(
+        read().map((item) => {
+          if (item.id !== id) return item;
+          count = (item.failures ?? 0) + 1;
+          return { ...item, failures: count };
+        }),
+      );
+      return count;
     },
   };
 }
@@ -87,8 +110,11 @@ export type FlushResult = {
 };
 
 /**
- * Sends the queued items one by one, oldest first. It stops at the first
- * "retry" so the order is kept and a dead connection is not hammered.
+ * Sends the queued items one by one, oldest first. When there is no
+ * connection (the send throws) it stops, so a dead connection is not hammered.
+ * When the server answers with a fault the item stays and the next one is
+ * tried; after MAX_SERVER_FAULTS faults the item is dropped, so one bad item
+ * cannot block everything behind it.
  */
 export async function flushQueue<T>(
   queue: OfflineQueue<T>,
@@ -102,9 +128,12 @@ export async function flushQueue<T>(
     try {
       outcome = await send(item);
     } catch {
-      outcome = "retry";
+      break;
     }
-    if (outcome === "retry") break;
+    if (outcome === "retry") {
+      if (queue.recordFault(item.id) < MAX_SERVER_FAULTS) continue;
+      outcome = "drop";
+    }
     queue.remove(item.id);
     (outcome === "sent" ? sent : dropped).push(item.id);
   }

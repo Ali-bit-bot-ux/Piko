@@ -212,6 +212,23 @@ describe("calculateScore decisions", () => {
       ball_comfort: [5, 4],
     });
     expect(below!.strongDisagreement).toBe(false);
+    // The gap is max minus min over all coaches, not between neighbours.
+    const three = calculateScore("U7_U9", {
+      ...uniform("U7_U9", 5),
+      ball_comfort: [2, 3, 4],
+    });
+    expect(three!.strongDisagreement).toBe(true);
+    const close = calculateScore("U7_U9", {
+      ...uniform("U7_U9", 5),
+      ball_comfort: [3, 3, 4],
+    });
+    expect(close!.strongDisagreement).toBe(false);
+    // One coach cannot disagree with themselves.
+    const alone = calculateScore("U7_U9", {
+      ...uniform("U7_U9", 5),
+      ball_comfort: [1],
+    });
+    expect(alone!.strongDisagreement).toBe(false);
     expect(SCALE_MIN).toBe(1);
     expect(SCALE_MAX).toBe(5);
   });
