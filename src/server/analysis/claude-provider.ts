@@ -1,33 +1,20 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import {
+  MAX_OUTPUT_TOKENS,
+  SYSTEM_PROMPT,
+  criteriaText,
+  finishResult,
+  frameCaption,
+  modelOutputSchema,
+} from "./shared";
+import {
   AnalysisError,
-  analysisResultSchema,
   assertInputWithinLimits,
-  parseAnalysisResult,
   type AnalysisInput,
   type AnalysisProvider,
   type AnalysisResult,
 } from "./types";
-
-/**
- * What the model returns. Token usage is not asked from the model: it comes
- * from the API response, so it cannot be invented.
- */
-const modelOutputSchema = analysisResultSchema.omit({ usage: true });
-
-const SYSTEM_PROMPT = [
-  "Ты помощник тренера детской футбольной академии. По кадрам видео и журналу событий предложи оценки по заданным критериям.",
-  "Шкала 1–5: 1 — не соответствует возрасту, 2 — ниже ожидаемого, 3 — соответствует возрасту, 4 — выше ожидаемого, 5 — существенно выше.",
-  "Ты только предлагаешь оценки. Решение принимает тренер, поэтому не делай выводов о зачислении ребёнка.",
-  "Оценивай только то, что видно на кадрах или записано в журнале. Если по материалу судить о критерии нельзя, не включай его в ответ.",
-  "Пиши по-русски, доброжелательно и конкретно, про действия на поле, а не про личность ребёнка. Комментарий к критерию: одно-два предложения.",
-  "Не называй имён. В summary: два-три предложения о том, что получается и над чем поработать.",
-  "keyMoments: не больше пяти важных моментов, timeSec берёшь из подписей кадров («Кадр на N с»).",
-  "Используй в criterionKey только ключи из списка критериев.",
-].join("\n");
-
-const MAX_OUTPUT_TOKENS = 8_000;
 
 /** The slice of the Anthropic client this provider uses (replaceable in tests). */
 export type ClaudeClient = Pick<Anthropic, "messages">;
@@ -86,23 +73,9 @@ export class ClaudeAnalysisProvider implements AnalysisProvider {
       );
     }
 
-    // Keep only criteria that were asked for, one suggestion per criterion.
-    const asked = new Set(input.criteria);
-    const seen = new Set<string>();
-    const suggestions = output.suggestions.filter((suggestion) => {
-      if (!asked.has(suggestion.criterionKey)) return false;
-      if (seen.has(suggestion.criterionKey)) return false;
-      seen.add(suggestion.criterionKey);
-      return true;
-    });
-
-    return parseAnalysisResult({
-      ...output,
-      suggestions,
-      usage: {
-        inputTokens: response.usage.input_tokens,
-        outputTokens: response.usage.output_tokens,
-      },
+    return finishResult(output, input, {
+      inputTokens: response.usage.input_tokens,
+      outputTokens: response.usage.output_tokens,
     });
   }
 }
@@ -114,7 +87,7 @@ function buildContent(input: AnalysisInput): Anthropic.ContentBlockParam[] {
   for (const frame of input.frames) {
     content.push({
       type: "text",
-      text: `Кадр на ${frame.timeSec.toFixed(1)} с`,
+      text: frameCaption(frame.timeSec),
     });
     content.push({
       type: "image",
@@ -126,10 +99,6 @@ function buildContent(input: AnalysisInput): Anthropic.ContentBlockParam[] {
     });
   }
 
-  const parts = [`Критерии для оценки (ключи): ${input.criteria.join(", ")}`];
-  if (input.eventLog) {
-    parts.push(`Журнал событий:\n<event_log>\n${input.eventLog}\n</event_log>`);
-  }
-  content.push({ type: "text", text: parts.join("\n\n") });
+  content.push({ type: "text", text: criteriaText(input) });
   return content;
 }

@@ -1,7 +1,12 @@
 import { z } from "zod";
 
+const providerNames = ["stub", "claude", "gemini", "groq"] as const;
+export type AnalysisProviderName = (typeof providerNames)[number];
+
 const envSchema = z.object({
-  ANALYSIS_PROVIDER: z.enum(["stub", "claude", "google"]).default("stub"),
+  ANALYSIS_PROVIDER: z.enum(providerNames).default("stub"),
+  // Backup used when the main provider fails (e.g. gemini with groq behind it).
+  ANALYSIS_FALLBACK: z.enum(providerNames).optional(),
   STORAGE: z.enum(["local", "cloud"]).default("local"),
   STORAGE_LOCAL_DIR: z.string().min(1).default(".data/storage"),
   DATABASE_URL: z.string().min(1).optional(),
@@ -9,15 +14,21 @@ const envSchema = z.object({
   // Haiku keeps the cost per child low (docs/pricing.md); change it here when
   // measured quality on real matches calls for a stronger model.
   ANTHROPIC_MODEL: z.string().min(1).default("claude-haiku-5-5"),
+  GEMINI_API_KEY: z.string().min(1).optional(),
+  // Flash: cheap and fast with pictures. Change here when a newer one is out.
+  GEMINI_MODEL: z.string().min(1).default("gemini-2.5-flash"),
+  GROQ_API_KEY: z.string().min(1).optional(),
+  GROQ_MODEL: z
+    .string()
+    .min(1)
+    .default("meta-llama/llama-4-scout-17b-16e-instruct"),
   APP_URL: z.url().default("http://localhost:3000"),
-  // Where academies pay (Kaspi transfer or QR, T-065). All optional.
-  KASPI_PHONE: z.string().min(5).optional(),
-  KASPI_RECIPIENT: z.string().min(2).optional(),
-  KASPI_QR_URL: z.url().optional(),
 });
 
 export type AppConfig = {
-  analysisProvider: "stub" | "claude" | "google";
+  analysisProvider: AnalysisProviderName;
+  /** Backup provider, asked when the main one fails. */
+  analysisFallback?: AnalysisProviderName;
   storage: "local" | "cloud";
   storageLocalDir: string;
   /** Postgres connection string. Optional so tools that do not need the database still start. */
@@ -25,10 +36,12 @@ export type AppConfig = {
   /** Key for the Claude provider (ANALYSIS_PROVIDER=claude). */
   anthropicApiKey?: string;
   anthropicModel: string;
+  geminiApiKey?: string;
+  geminiModel: string;
+  groqApiKey?: string;
+  groqModel: string;
   /** Public address of the site, used in links and QR codes (no trailing slash). */
   appUrl: string;
-  /** Kaspi details shown to academies on the payment page; empty until set. */
-  kaspi: { phone?: string; recipient?: string; qrUrl?: string };
 };
 
 export class ConfigError extends Error {
@@ -56,16 +69,16 @@ export function loadConfig(env: Env = process.env): AppConfig {
   }
   return {
     analysisProvider: parsed.data.ANALYSIS_PROVIDER,
+    analysisFallback: parsed.data.ANALYSIS_FALLBACK,
     storage: parsed.data.STORAGE,
     storageLocalDir: parsed.data.STORAGE_LOCAL_DIR,
     databaseUrl: parsed.data.DATABASE_URL,
     anthropicApiKey: parsed.data.ANTHROPIC_API_KEY,
     anthropicModel: parsed.data.ANTHROPIC_MODEL,
+    geminiApiKey: parsed.data.GEMINI_API_KEY,
+    geminiModel: parsed.data.GEMINI_MODEL,
+    groqApiKey: parsed.data.GROQ_API_KEY,
+    groqModel: parsed.data.GROQ_MODEL,
     appUrl: parsed.data.APP_URL.replace(/\/+$/, ""),
-    kaspi: {
-      phone: parsed.data.KASPI_PHONE,
-      recipient: parsed.data.KASPI_RECIPIENT,
-      qrUrl: parsed.data.KASPI_QR_URL,
-    },
   };
 }

@@ -1,42 +1,50 @@
 import { getDictionary } from "@/lib/i18n";
-import { BuildingIcon, FlagIcon, UsersIcon, WhistleIcon } from "./icons";
 
-const icons = [BuildingIcon, UsersIcon, WhistleIcon, FlagIcon];
-
-/** "Who is it for" strip. Text placeholders only: no logos or counts (D-013). */
+/**
+ * Compact trust strip like the reference: who we work with (partners named by
+ * the owner, D-043) and real facts about the product instead of invented counts.
+ */
 export function AudienceStrip() {
   const t = getDictionary().landing.audience;
 
   return (
     <section
       aria-labelledby="audience-title"
-      className="border-y border-line bg-surface"
+      className="border-y border-line bg-surface-muted"
     >
-      <div className="mx-auto w-full max-w-6xl px-4 py-10 sm:px-6">
+      <div className="mx-auto grid w-full max-w-6xl items-center gap-6 px-4 py-6 sm:px-6 lg:grid-cols-[13rem_1fr_1.3fr] lg:gap-8">
         <h2
           id="audience-title"
-          className="text-center text-sm font-bold uppercase tracking-wide text-ink-muted"
+          className="text-sm font-bold leading-snug text-ink"
         >
           {t.title}
         </h2>
-        <ul className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {t.items.map((item, index) => {
-            const Icon = icons[index] ?? BuildingIcon;
-            return (
-              <li
-                key={item.title}
-                className="flex items-center gap-3 rounded-card bg-surface-muted p-4"
-              >
-                <span className="inline-flex size-11 shrink-0 items-center justify-center rounded-full bg-surface text-primary">
-                  <Icon className="size-6" />
-                </span>
-                <span className="flex flex-col">
-                  <span className="font-semibold text-ink">{item.title}</span>
-                  <span className="text-sm text-ink-muted">{item.text}</span>
-                </span>
-              </li>
-            );
-          })}
+
+        <ul className="flex flex-wrap items-center gap-3 lg:justify-center">
+          {t.partners.map((partner) => (
+            <li
+              key={partner.name}
+              className="flex flex-col rounded-xl border border-line bg-surface px-4 py-2 text-center"
+            >
+              <span className="text-lg font-extrabold leading-tight tracking-tight text-ink">
+                {partner.name}
+              </span>
+              <span className="text-xs text-ink-muted">{partner.place}</span>
+            </li>
+          ))}
+        </ul>
+
+        <ul className="grid gap-4 border-line sm:grid-cols-3 lg:border-l lg:pl-8">
+          {t.facts.map((fact) => (
+            <li key={fact.value} className="flex items-center gap-3">
+              <span className="text-3xl font-extrabold tracking-tight text-ink">
+                {fact.value}
+              </span>
+              <span className="text-xs leading-snug text-ink-muted">
+                {fact.label}
+              </span>
+            </li>
+          ))}
         </ul>
       </div>
     </section>

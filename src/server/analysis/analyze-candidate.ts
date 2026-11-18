@@ -121,11 +121,12 @@ export async function analyzeCandidate(
   let providerName: string;
   try {
     const provider = deps.provider ?? createAnalysisProvider(loadConfig());
-    providerName = provider.name;
     result = await provider.analyze({
       criteria: criterionKeys(intake.ageProfile),
       frames,
     });
+    // After the call: with a backup, this is the provider that answered.
+    providerName = provider.name;
   } catch (error) {
     // Only the error class is logged: messages could echo model output.
     console.error(

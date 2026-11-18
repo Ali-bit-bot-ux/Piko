@@ -41,10 +41,7 @@ export async function AuthGate({ children }: { children: React.ReactNode }) {
             matchPrefixes: ["/intakes"],
           },
           ...(canManageIntakes(user)
-            ? [
-                { href: routes.analytics, label: cabinet.nav.analytics },
-                { href: routes.billing, label: cabinet.nav.billing },
-              ]
+            ? [{ href: routes.analytics, label: cabinet.nav.analytics }]
             : []),
         ]}
       />

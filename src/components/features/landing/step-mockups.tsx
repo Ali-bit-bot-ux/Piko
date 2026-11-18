@@ -12,7 +12,7 @@ function Frame({ children }: { children: ReactNode }) {
   return (
     <div
       aria-hidden
-      className="relative flex min-h-36 flex-col justify-center gap-2 rounded-2xl bg-surface-muted p-4"
+      className="relative flex min-h-36 flex-col justify-center gap-2 rounded-2xl bg-surface-muted p-3"
     >
       <span className="absolute right-3 top-3 text-[0.7rem] font-semibold uppercase tracking-wide text-ink-muted">
         {example}
@@ -57,10 +57,10 @@ function RegistrationMockup() {
   const m = getDictionary().landing.process.mockups.registration;
   return (
     <Frame>
-      <div className="flex items-center gap-3 pt-3">
+      <div className="flex flex-wrap items-center gap-2 pt-3">
         <svg
           viewBox="0 0 7 7"
-          className="size-16 shrink-0 rounded-md bg-surface p-1"
+          className="size-14 shrink-0 rounded-md bg-surface p-1"
         >
           {qrCells.flatMap((row, y) =>
             [...row].map((cell, x) =>
@@ -111,7 +111,7 @@ function ResultMockup() {
   const m = getDictionary().landing.process.mockups.result;
   return (
     <Frame>
-      <div className="flex items-center gap-3 pt-3">
+      <div className="flex flex-wrap items-center gap-2 pt-3">
         <ScoreRing value={4.2} size="sm" label={m.ringLabel} />
         <Badge variant="success">{m.status}</Badge>
       </div>

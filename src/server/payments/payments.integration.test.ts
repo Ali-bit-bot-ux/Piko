@@ -2,7 +2,6 @@
 import { config } from "dotenv";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import type { PrismaClient } from "@/generated/prisma/client";
-import { listPaymentsForUser } from "../db/payments";
 import { confirmPayment, createPayment } from "./payments";
 
 config({ path: [".env.local", ".env"], quiet: true });
@@ -96,30 +95,5 @@ describe.skipIf(!hasDatabase)("manual payments (database)", () => {
       ok: false,
       code: "cancelled",
     });
-  });
-
-  it("shows an academy only its own bills, and only to directors and admins", async () => {
-    const mine = await listPaymentsForUser(
-      { role: "director", organizationId: orgId },
-      prisma,
-    );
-    expect(mine!.payments.length).toBeGreaterThanOrEqual(2);
-    const other = await listPaymentsForUser(
-      { role: "admin", organizationId: otherOrgId },
-      prisma,
-    );
-    expect(other!.payments).toEqual([]);
-    expect(
-      await listPaymentsForUser(
-        { role: "coach", organizationId: orgId },
-        prisma,
-      ),
-    ).toBeNull();
-    expect(
-      await listPaymentsForUser(
-        { role: "parent", organizationId: null },
-        prisma,
-      ),
-    ).toBeNull();
   });
 });

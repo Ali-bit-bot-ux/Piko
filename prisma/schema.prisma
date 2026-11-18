@@ -116,8 +116,9 @@ enum PaymentStatus {
   cancelled
 }
 
-/// A bill paid by hand through Kaspi (transfer or QR), B2B (T-065). Created and
-/// confirmed by the team (`npm run payment`), shown to the academy's director.
+/// The team's own ledger of bills paid by hand through Kaspi, B2B (T-065, D-041).
+/// Academies contact the team first; bills are created and confirmed with
+/// `npm run payment`. Not shown on the site.
 model Payment {
   id             String        @id @default(uuid()) @db.Uuid
   organizationId String        @db.Uuid

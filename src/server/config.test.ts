@@ -9,21 +9,32 @@ describe("loadConfig", () => {
       storageLocalDir: ".data/storage",
       appUrl: "http://localhost:3000",
       anthropicModel: "claude-haiku-5-5",
-      kaspi: {},
+      geminiModel: "gemini-2.5-flash",
+      groqModel: "meta-llama/llama-4-scout-17b-16e-instruct",
     });
   });
 
-  it("reads the Kaspi payment details", () => {
+  it("reads Gemini as the main provider with Groq as the backup", () => {
     const config = loadConfig({
-      KASPI_PHONE: "+7 700 000 00 00",
-      KASPI_RECIPIENT: "ТОО Пример",
-      KASPI_QR_URL: "https://example.invalid/qr.png",
+      ANALYSIS_PROVIDER: "gemini",
+      ANALYSIS_FALLBACK: "groq",
+      GEMINI_API_KEY: "g",
+      GROQ_API_KEY: "q",
+      GEMINI_MODEL: "gemini-custom",
     });
-    expect(config.kaspi).toEqual({
-      phone: "+7 700 000 00 00",
-      recipient: "ТОО Пример",
-      qrUrl: "https://example.invalid/qr.png",
+    expect(config).toMatchObject({
+      analysisProvider: "gemini",
+      analysisFallback: "groq",
+      geminiApiKey: "g",
+      groqApiKey: "q",
+      geminiModel: "gemini-custom",
     });
+  });
+
+  it("rejects an unknown provider name", () => {
+    expect(() => loadConfig({ ANALYSIS_FALLBACK: "openai" })).toThrow(
+      ConfigError,
+    );
   });
 
   it("reads the Claude key and model", () => {

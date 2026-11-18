@@ -10,7 +10,7 @@ export function Hero() {
 
   return (
     <section className="bg-gradient-to-b from-surface-muted to-surface">
-      <div className="mx-auto grid w-full max-w-6xl items-center gap-12 px-4 pb-16 pt-10 sm:px-6 lg:grid-cols-2 lg:gap-16 lg:pb-24 lg:pt-16">
+      <div className="mx-auto grid w-full max-w-6xl items-center gap-12 px-4 pb-10 pt-8 sm:px-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.25fr)] lg:gap-12 lg:pb-12 lg:pt-10">
         <div className="flex flex-col items-start gap-6">
           <Badge variant="accent">{t.badge}</Badge>
           <h1 className="text-4xl font-extrabold leading-tight tracking-tight text-ink sm:text-5xl">
@@ -26,6 +26,10 @@ export function Hero() {
               {t.secondaryCta}
             </ButtonLink>
           </div>
+          <p className="flex items-center gap-2 text-sm font-medium text-ink-muted">
+            <span aria-hidden className="size-2 rounded-full bg-success" />
+            {t.proof}
+          </p>
         </div>
 
         <HeroArt />

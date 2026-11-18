@@ -24,14 +24,16 @@ export function StepCard({
       )}
       {...props}
     >
-      <div className="flex items-center gap-3">
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
         <span
           aria-hidden
           className="inline-flex size-8 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-bold text-white"
         >
           {number}
         </span>
-        <h3 className="text-base font-semibold text-ink">{title}</h3>
+        <h3 className="min-w-0 text-base font-semibold text-ink [overflow-wrap:anywhere]">
+          {title}
+        </h3>
       </div>
       {description ? (
         <p className="text-sm text-ink-muted">{description}</p>

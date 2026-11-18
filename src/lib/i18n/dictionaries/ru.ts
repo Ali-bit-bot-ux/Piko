@@ -1,5 +1,4 @@
 import { analyticsRu } from "./analytics.ru";
-import { billingRu } from "./billing.ru";
 import { analysisRu } from "./analysis.ru";
 import { landingRu } from "./landing.ru";
 import { resultsRu } from "./results.ru";
@@ -59,7 +58,6 @@ export const ru = {
     nav: {
       intakes: "Наборы",
       analytics: "Аналитика",
-      billing: "Оплата",
     },
   },
   intakes: {
@@ -244,7 +242,6 @@ export const ru = {
   },
   analysis: analysisRu,
   analytics: analyticsRu,
-  billing: billingRu,
   results: resultsRu,
   report: reportRu,
   // Decision statuses, see docs/scoring.md.

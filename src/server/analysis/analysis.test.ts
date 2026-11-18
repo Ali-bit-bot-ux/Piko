@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import {
   AnalysisError,
   MAX_FRAMES_PER_REQUEST,
+  FallbackAnalysisProvider,
+  GeminiAnalysisProvider,
   StubAnalysisProvider,
   createAnalysisProvider,
   parseAnalysisResult,
@@ -126,12 +128,57 @@ describe("createAnalysisProvider", () => {
     ).toThrow(/ANTHROPIC_API_KEY/);
   });
 
-  it("fails clearly for providers that are not implemented yet", () => {
+  it("builds Gemini and Groq when their keys are configured", () => {
+    const base = { anthropicModel: "claude-haiku-5-5" };
+    expect(
+      createAnalysisProvider({
+        ...base,
+        analysisProvider: "gemini",
+        geminiApiKey: "k",
+      }).name,
+    ).toBe("gemini");
+    expect(
+      createAnalysisProvider({
+        ...base,
+        analysisProvider: "groq",
+        groqApiKey: "k",
+      }).name,
+    ).toBe("groq");
+  });
+
+  it("asks for the key of the chosen provider and of the backup", () => {
+    const base = { anthropicModel: "claude-haiku-5-5" };
+    expect(() =>
+      createAnalysisProvider({ ...base, analysisProvider: "gemini" }),
+    ).toThrow(/GEMINI_API_KEY/);
     expect(() =>
       createAnalysisProvider({
-        analysisProvider: "google",
-        anthropicModel: "claude-haiku-5-5",
+        ...base,
+        analysisProvider: "gemini",
+        geminiApiKey: "k",
+        analysisFallback: "groq",
       }),
-    ).toThrow(/T-061/);
+    ).toThrow(/GROQ_API_KEY/);
+  });
+
+  it("wraps the main provider with a backup only when it is a different one", () => {
+    const base = {
+      anthropicModel: "claude-haiku-5-5",
+      geminiApiKey: "k",
+      groqApiKey: "k",
+    };
+    const same = createAnalysisProvider({
+      ...base,
+      analysisProvider: "gemini",
+      analysisFallback: "gemini",
+    });
+    expect(same).toBeInstanceOf(GeminiAnalysisProvider);
+    const both = createAnalysisProvider({
+      ...base,
+      analysisProvider: "gemini",
+      analysisFallback: "groq",
+    });
+    expect(both).toBeInstanceOf(FallbackAnalysisProvider);
+    expect(both.name).toBe("gemini");
   });
 });
